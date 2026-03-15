@@ -1,0 +1,12 @@
+[
+  { "label": "开心", "value": "happy", "category": "POSITIVE" },
+  { "label": "悲伤", "value": "sad", "category": "NEGATIVE" },
+  { "label": "生气", "value": "angry", "category": "NEGATIVE" },
+  { "label": "惊讶", "value": "surprised", "category": "NEUTRAL" },
+  { "label": "恐惧", "value": "fear", "category": "NEGATIVE" },
+  { "label": "厌恶", "value": "hate", "category": "NEGATIVE" },
+  { "label": "激动", "value": "excited", "category": "POSITIVE" },
+  { "label": "冷漠", "value": "coldness", "category": "NEGATIVE" },
+  { "label": "中性", "value": "neutral", "category": "NEUTRAL" },
+  { "label": "沮丧", "value": "depressed", "category": "NEGATIVE" }
+]

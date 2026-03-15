@@ -1,0 +1,107 @@
+[
+  {
+    "voice_name": "冷酷哥哥 (多情感)",
+    "voice_type": "zh_male_lengkugege_emo_v2_mars_bigtts",
+    "language": "中文",
+    "supported_emotions": ["生气", "冷漠", "恐惧", "开心", "厌恶", "中性", "悲伤", "沮丧"],
+    "launched_business_party": ""
+  },
+  {
+    "voice_name": "甜心小美 (多情感)",
+    "voice_type": "zh_female_tianxinxiaomei_emo_v2_mars_bigtts",
+    "language": "中文",
+    "supported_emotions": ["悲伤", "恐惧", "厌恶", "中性"],
+    "launched_business_party": "剪映"
+  },
+  {
+    "voice_name": "高冷御姐 (多情感)",
+    "voice_type": "zh_female_gaolengyujie_emo_v2_mars_bigtts",
+    "language": "中文",
+    "supported_emotions": ["开心", "悲伤", "生气", "惊讶", "恐惧", "厌恶", "激动", "冷漠", "中性"],
+    "launched_business_party": "剪映"
+  },
+  {
+    "voice_name": "傲娇霸总 (多情感)",
+    "voice_type": "zh_male_aojiaobazong_emo_v2_mars_bigtts",
+    "language": "中文",
+    "supported_emotions": ["中性", "开心", "生气", "厌恶"],
+    "launched_business_party": "剪映"
+  },
+  {
+    "voice_name": "广州德哥 (多情感)",
+    "voice_type": "zh_male_guangzhoudege_emo_mars_bigtts",
+    "language": "中文",
+    "supported_emotions": ["生气", "恐惧", "中性"],
+    "launched_business_party": "剪映"
+  },
+  {
+    "voice_name": "京腔侃爷 (多情感)",
+    "voice_type": "zh_male_jingqiangkanye_emo_mars_bigtts",
+    "language": "中文",
+    "supported_emotions": ["开心", "生气", "惊讶", "厌恶", "中性"],
+    "launched_business_party": "剪映"
+  },
+  {
+    "voice_name": "邻居阿姨 (多情感)",
+    "voice_type": "zh_female_linjuayi_emo_v2_mars_bigtts",
+    "language": "中文",
+    "supported_emotions": ["中性", "生气", "冷漠", "沮丧", "惊讶"],
+    "launched_business_party": "剪映"
+  },
+  {
+    "voice_name": "优柔公子 (多情感)",
+    "voice_type": "zh_male_yourougongzi_emo_v2_mars_bigtts",
+    "language": "中文",
+    "supported_emotions": ["开心", "生气", "恐惧", "厌恶", "激动", "中性", "沮丧"],
+    "launched_business_party": "剪映"
+  },
+  {
+    "voice_name": "儒雅男友 (多情感)",
+    "voice_type": "zh_male_ruyayichen_emo_v2_mars_bigtts",
+    "language": "中文",
+    "supported_emotions": ["开心", "悲伤", "生气", "恐惧", "激动", "冷漠", "中性"],
+    "launched_business_party": "剪映"
+  },
+  {
+    "voice_name": "俊朗男友 (多情感)",
+    "voice_type": "zh_male_junlangnanyou_emo_v2_mars_bigtts",
+    "language": "中文",
+    "supported_emotions": ["开心", "悲伤", "生气", "惊讶", "恐惧", "中性"],
+    "launched_business_party": "剪映"
+  },
+  {
+    "voice_name": "北京小爷 (多情感)",
+    "voice_type": "zh_male_beijingxiaoye_emo_v2_mars_bigtts",
+    "language": "中文",
+    "supported_emotions": ["生气", "惊讶", "恐惧", "激动", "冷漠", "中性"],
+    "launched_business_party": ""
+  },
+  {
+    "voice_name": "柔美女友 (多情感)",
+    "voice_type": "zh_female_roumeinvyou_emo_v2_mars_bigtts",
+    "language": "中文",
+    "supported_emotions": ["开心", "悲伤", "生气", "惊讶", "恐惧", "厌恶", "激动", "冷漠", "中性"],
+    "launched_business_party": ""
+  },
+  {
+    "voice_name": "阳光青年 (多情感)",
+    "voice_type": "zh_male_yangguangqingnian_emo_v2_mars_bigtts",
+    "language": "中文",
+    "supported_emotions": ["开心", "悲伤", "生气", "恐惧", "激动", "冷漠", "中性"],
+    "launched_business_party": ""
+  },
+  {
+    "voice_name": "魅力女友 (多情感)",
+    "voice_type": "zh_female_meilinvyout_emo_v2_mars_bigtts",
+    "language": "中文",
+    "supported_emotions": ["悲伤", "恐惧", "中性"],
+    "launched_business_party": ""
+  },
+  {
+    "voice_name": "深夜播客",
+    "voice_type": "zh_male_shenyebok_emo_v2_mars_bigtts",
+    "language": "中文",
+    "supported_emotions": ["惊讶", "悲伤", "中性", "厌恶", "开心", "恐惧", "激动", "沮丧", "冷漠", "生气"],
+    "launched_business_party": "猫箱"
+  }
+]

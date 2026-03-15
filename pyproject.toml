@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "video-dubbing-api"
+version = "0.1.0"
+description = "A FastAPI-based API for video dubbing using OpenAI and AssemblyAI."
+readme = "README.md"
+requires-python = ">=3.12.3"
+license = {text = "MIT"}
+authors = [
+    {name = "nicolasfive", email = "nicolasfive1995@outlook.com"}
+]
+keywords = ["video", "dubbing"]
+
+dependencies = [
+"assemblyai==0.48.4",
+"ffmpeg-python==0.2.0",
+"requests",
+"fastapi==0.128.0",
+"uvicorn>=0.24.0",
+"pydantic>=2.4.0",
+"python-dotenv",
+"pydantic-settings",
+"python-multipart==0.0.22",
+"openai==2.16.0",
+"jinja2",
+"demucs==4.0.1",
+"torch==2.3.0",
+"torchaudio==2.3.0",
+"numpy==1.26.4",
+"soundfile==0.13.1",
+"websockets>=14.0",
+"pydub==0.25.1",
+"celery[redis]==5.6.2",
+"aiofiles==25.1.0"
+]
+
+[tool.setuptools]
+packages = ["app"]

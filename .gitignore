@@ -1,0 +1,14 @@
+venv/
+temp/
+**/__pycache__/
+.python-version
+.env
+.env.*
+tests/
+文档
+*.pem
+app.log
+*.egg-info/
+redis_data
+storage/
+scripts/ssh-reverse-proxy.sh
