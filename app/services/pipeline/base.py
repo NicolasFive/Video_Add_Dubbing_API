@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+import json
 
 from app.models.domain import ProcessingContext
 
@@ -12,6 +13,15 @@ class BasePipelineStage(ABC):
     @abstractmethod
     def run(self, ctx: ProcessingContext) -> None:
         raise NotImplementedError
+    
+    
+    @staticmethod
+    def _save_log(ctx: ProcessingContext, log_name: str = "",log_data=None) -> None:
+        if log_data is None:
+            log_data = {}
+        log_path = ctx.work_dir / f"{log_name}.json"
+        with open(log_path, "w", encoding="utf-8") as f:
+            json.dump(log_data, f, ensure_ascii=False, indent=2)
 
 
 @dataclass(frozen=True)

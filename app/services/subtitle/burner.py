@@ -4,7 +4,7 @@ import ffmpeg
 import os
 
 
-class SubtitleBurner:
+class FFmpegBurner:
     def burn(
         self,
         video_path: Path,

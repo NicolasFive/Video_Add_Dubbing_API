@@ -2,7 +2,7 @@ from pydub import AudioSegment
 from pydub.utils import make_chunks
 import logging
 
-class AudioMixer:
+class PydubMixAudio:
 
     def init_voice(self, voice_path: str):
         self.voice_file = AudioSegment.from_file(voice_path)
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     insert_wav = r"temp/20260225_171806_80dd1add/htdemucs/input/vocals.wav"
     insert_wav2 = r"zh_female_cancan_mars_bigtts.wav"
     output_mp3 = "merged_result.wav"
-    overlayer = AudioMixer(voice_path=main_mp3)
+    overlayer = PydubMixAudio(voice_path=main_mp3)
     overlayer.add_overlay(insert_wav, 0)
     overlayer.add_overlay(insert_wav2, 5000)
     overlayer.export(output_mp3)

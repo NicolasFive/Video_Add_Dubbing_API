@@ -70,8 +70,8 @@ async def run_volcengine(
                 "additions": json.dumps(additions, ensure_ascii=False),
             },
         }
-        speech_rate = speed_ratio * 100 - 100
-        loudness_rate = loudness_ratio * 100 - 100
+        speech_rate = round(speed_ratio * 100 - 100)
+        loudness_rate = round(loudness_ratio * 100 - 100)
         request["req_params"]["audio_params"]["speech_rate"] = speech_rate
         request["req_params"]["audio_params"]["loudness_rate"] = loudness_rate
         if emotion:

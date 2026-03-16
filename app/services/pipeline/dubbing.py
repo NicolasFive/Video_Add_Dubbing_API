@@ -6,7 +6,7 @@ from typing import Callable
 
 from app.core.exceptions import AppException
 from app.models.domain import ProcessingContext
-from app.services.pipeline_stages import (
+from app.services.pipeline import (
     BasePipelineStage,
     PipelineStageConfig,
     build_default_stage_configs,

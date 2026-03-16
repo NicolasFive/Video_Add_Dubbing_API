@@ -77,4 +77,5 @@ class ProcessingContext:
 class ReducerData:
     text: str
     target_length: int
+    reduced_text: Optional[str] = None
 
