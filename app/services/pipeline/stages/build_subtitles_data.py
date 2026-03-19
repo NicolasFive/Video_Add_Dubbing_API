@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import json
+
+from dataclasses import asdict
 
 from app.models.domain import (
     DurationRating,
@@ -27,6 +28,7 @@ class RuleBasedBuildSubtitlesDataStage(BasePipelineStage):
                 end_ms=transcript.end_ms,
                 text=translation.translated_text,
                 sentiment=transcript.sentiment,
+                speaker=transcript.speaker,
             )
             self._evaluate_speed_ratio(sub)
             raw_subtitles.append(sub)
@@ -38,9 +40,13 @@ class RuleBasedBuildSubtitlesDataStage(BasePipelineStage):
         prev_sub = None
         for sub in raw_subtitles:
             # 判断是否与前一条超长字幕首尾相连，是则合并文本和时长
-            if prev_sub and prev_sub.tts_duration_rating == DurationRating.TOO_LONG:
+            if (
+                prev_sub
+                and prev_sub.tts_duration_rating == DurationRating.TOO_LONG
+                and sub.speaker == prev_sub.speaker
+            ):
                 gap = sub.start_ms - prev_sub.end_ms
-                if gap < 100:
+                if gap < 1000:
                     prev_sub.end_ms = sub.end_ms
                     prev_sub.text = "\n".join([prev_sub.text, sub.text])
                     self._evaluate_speed_ratio(prev_sub)
@@ -72,6 +78,8 @@ class RuleBasedBuildSubtitlesDataStage(BasePipelineStage):
             and len(handled_subtitles) > 1
         ):
             last_prev_sub = handled_subtitles[-2]
+            if last_prev_sub.speaker != last_sub.speaker:
+                break
             gap = last_sub.start_ms - last_prev_sub.end_ms
             if gap < 500:
                 last_prev_sub.end_ms = last_sub.end_ms
@@ -105,23 +113,11 @@ class RuleBasedBuildSubtitlesDataStage(BasePipelineStage):
         sub.tts_expected_speed_ratio = target_ratio
         sub.tts_eval_speed_ratio = translated_speed_ratio
 
-    def _save_subtitles_log(self,ctx: ProcessingContext, subtitles: list[SubtitleLine], suffix: str = "") -> None:
-        log_data = []
-        for sub in subtitles:
-            log_data.append(
-                {
-                    "start_ms": sub.start_ms,
-                    "end_ms": sub.end_ms,
-                    "sentiment": sub.sentiment.value if sub.sentiment else None,
-                    "text": sub.text,
-                    "tts_duration_rating": (
-                        sub.tts_duration_rating.value
-                        if sub.tts_duration_rating
-                        else None
-                    ),
-                    "tts_eval_speed_ratio": sub.tts_eval_speed_ratio,
-                    "tts_expected_speed_ratio": sub.tts_expected_speed_ratio,
-                    "tts_expected_duration_ms": sub.tts_expected_duration_ms,
-                }
-            )
-        self._save_log(ctx, log_name=f"subtitles{f'_{suffix}' if suffix else ''}", log_data=log_data)
+    def _save_subtitles_log(
+        self, ctx: ProcessingContext, subtitles: list[SubtitleLine], suffix: str = ""
+    ) -> None:
+        self._save_log(
+            ctx,
+            log_name=f"subtitles{f'_{suffix}' if suffix else ''}",
+            log_data=[asdict(item) for item in subtitles],
+        )

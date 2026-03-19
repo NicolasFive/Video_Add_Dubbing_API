@@ -25,13 +25,14 @@ class AssemblyAITranscribeStage(BasePipelineStage):
             s_text = item.get("text", "")
             start = item.get("start", 0)
             end = item.get("end", 0)
+            speaker = item.get("speaker", "unknown")
             try:
                 sentiment = Sentiment(item.get("sentiment", Sentiment.NEUTRAL.value))
             except ValueError:
                 sentiment = Sentiment.NEUTRAL
             result.append(
                 TranscriptLine(
-                    text=s_text, start_ms=start, end_ms=end, sentiment=sentiment
+                    text=s_text, start_ms=start, end_ms=end, sentiment=sentiment, speaker=speaker
                 )
             )
         return result

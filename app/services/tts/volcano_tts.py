@@ -59,8 +59,8 @@ class VolcanoTTSService:
     )->None:
         asyncio.run(
             run_volcengine(
-                appid=settings.VOLCANO_TTS_APPID,
-                access_token=settings.VOLCANO_TTS_ACCESS_TOKEN,
+                appid=settings.VOLCANO_TTS_V1_APPID,
+                access_token=settings.VOLCANO_TTS_V1_ACCESS_TOKEN,
                 voice_type=voice_type,
                 text=text,
                 speed_ratio=speed_ratio,

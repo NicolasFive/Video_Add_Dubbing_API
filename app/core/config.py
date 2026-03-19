@@ -23,8 +23,10 @@ class Settings(BaseSettings):
     S3_ACCESS_KEY:str = "xxxxx"
     S3_SECRET_KEY:str = "xxxxx"
     S3_BUCKET:str = "bucket-name"
-    VOLCANO_TTS_APPID: str = "0000000"
-    VOLCANO_TTS_ACCESS_TOKEN: str = "xxxxxxxxxxx"
+    VOLCANO_TTS_V1_APPID: str = "0000000"
+    VOLCANO_TTS_V1_ACCESS_TOKEN: str = "xxxxxxxxxxx"
+    VOLCANO_TTS_V2_APPID: str = "0000000"
+    VOLCANO_TTS_V2_ACCESS_TOKEN: str = "xxxxxxxxxxx"
     
     # --- 工具配置 ---
     DEMUCS_MODEL: str = "htdemucs"  # 人声分离模型

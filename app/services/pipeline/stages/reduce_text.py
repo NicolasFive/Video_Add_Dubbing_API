@@ -4,7 +4,7 @@ import logging
 
 from app.models.domain import DurationRating, ProcessingContext, ReducerData
 from app.services.translation.llm_reducer import LLMReducer
-
+from dataclasses import asdict
 from app.services.pipeline.base import BasePipelineStage
 
 logger = logging.getLogger(__name__)
@@ -48,4 +48,4 @@ class OpenAIReduceTextStage(BasePipelineStage):
                     )
                     sub.text = reduced_text
                 reduced_index += 1
-        self._save_log(ctx, log_name="reduced_texts", log_data=[{"text": rd.text, "target_length": rd.target_length, "reduced_text": rd.reduced_text} for rd in reducer_data_list])
+        self._save_log(ctx, log_name="reduced_texts", log_data=[asdict(rd) for rd in reducer_data_list])

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import json
 
 from app.models.domain import ProcessingContext, TranslateLine
 from app.services.translation.llm_translator import LLMTranslator
+from dataclasses import asdict
 
 from app.services.pipeline.base import BasePipelineStage
 
@@ -24,4 +24,11 @@ class OpenAITranslateStage(BasePipelineStage):
                 )
             )
         ctx.translations = translations
-        self._save_log(ctx, log_name="translations", log_data=[{"original_text": item.original_text, "translated_text": item.translated_text} for item in translations])
+        self._save_log(
+            ctx,
+            log_name="translations",
+            log_data=[
+                asdict(item)
+                for item in translations
+            ],
+        )

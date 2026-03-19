@@ -20,6 +20,7 @@ class SubtitleLine:
     end_ms: int
     text: str
     sentiment: Optional[Sentiment] = None
+    speaker: Optional[str] = None
     # 播放速率及评级
     tts_duration_rating: Optional[DurationRating] = None
     tts_eval_speed_ratio: Optional[float] = None
@@ -37,6 +38,7 @@ class TranscriptLine:
     end_ms: int
     text: str
     sentiment: Optional[Sentiment] = None
+    speaker: Optional[str] = None
 
 @dataclass
 class TranslateLine:
