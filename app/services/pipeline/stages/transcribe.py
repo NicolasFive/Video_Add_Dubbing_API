@@ -15,6 +15,12 @@ class AssemblyAITranscribeStage(BasePipelineStage):
         raw_data = result.json_response
         self._save_log(ctx, log_name="transcriptions", log_data=raw_data)
         ctx.transcripts = self._parse_transcript(raw_data)
+        
+    def get_data(self, ctx):
+        pass
+
+    def set_data(self, ctx, data):
+        pass
 
     @staticmethod
     def _parse_transcript(raw_data: dict) -> list[TranscriptLine]:

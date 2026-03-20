@@ -19,3 +19,9 @@ class DemucsSeparateVocalsStage(BasePipelineStage):
         vocals_path, inst_path = self.separator.separate(audio_path, ctx.work_dir)
         ctx.vocals_audio_path = vocals_path
         ctx.instrumentals_audio_path = inst_path
+        
+    def get_data(self, ctx):
+        pass
+
+    def set_data(self, ctx, data):
+        pass

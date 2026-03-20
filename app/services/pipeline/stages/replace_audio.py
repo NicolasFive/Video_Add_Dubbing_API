@@ -18,3 +18,32 @@ class FFmpegReplaceAudioStage(BasePipelineStage):
         self.replacer.replace(
             ctx.input_video_path, mixed_audio_path, video_with_dubbing
         )
+        
+    def get_data(self, ctx):
+        pass
+
+    def set_data(self, ctx, data):
+        pass
+
+
+
+
+
+class FFmpegOriginalSwapStage(BasePipelineStage):
+    def __init__(self):
+        self.replacer = FFmpegAudioReplacer()
+
+    def run(self, ctx: ProcessingContext) -> None:
+        if ctx.final_video_path is None:
+            return
+        output_path = ctx.work_dir / "final_video_original_swap.mp4"
+        audio_path = ctx.input_audio_path if ctx.input_audio_path is not None else ctx.input_video_path
+        self.replacer.replace(
+            ctx.final_video_path, audio_path, output_path
+        )
+        
+    def get_data(self, ctx):
+        pass
+
+    def set_data(self, ctx, data):
+        pass

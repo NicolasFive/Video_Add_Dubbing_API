@@ -25,3 +25,9 @@ class FFmpegBurnSubtitlesStage(BasePipelineStage):
             ctx.subtitle_font_size,
         )
         ctx.final_video_path = final_video_path
+
+    def get_data(self, ctx):
+        pass
+
+    def set_data(self, ctx, data):
+        pass    

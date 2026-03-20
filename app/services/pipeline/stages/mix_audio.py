@@ -17,7 +17,7 @@ class PydubMixAudioStage(BasePipelineStage):
     def run(self, ctx: ProcessingContext) -> None:
         mixed_audio_path = ctx.work_dir / "mixed_audio.wav"
         self.audio_mixer.init_voice(str(ctx.instrumentals_audio_path))
-        for sub in ctx.subtitles:
+        for sub in ctx.optimized_subtitles:
             if sub.translated_tts_path:
                 logger.info(
                     "Adding overlay: %s %s",
@@ -29,3 +29,9 @@ class PydubMixAudioStage(BasePipelineStage):
                     start_time_ms=sub.start_ms,
                 )
         self.audio_mixer.export(str(mixed_audio_path))
+
+    def get_data(self, ctx):
+        pass
+
+    def set_data(self, ctx, data):
+        pass

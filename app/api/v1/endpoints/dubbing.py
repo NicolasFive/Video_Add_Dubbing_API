@@ -49,7 +49,7 @@ async def get_actual_file_path(
 async def submit_dubbing_task(
     video: Optional[UploadFile] = File(None),
     audio: Optional[UploadFile] = File(None),
-    voice_type: Optional[str] = Form(None),
+    voice_types: Optional[list[str]] = Form(None),
     task_id: Optional[str] = Form(None),
     start_step: Optional[str] = Form(None),
     end_step: Optional[str] = Form(None),
@@ -82,7 +82,7 @@ async def submit_dubbing_task(
         input_audio_path_str=(
             None if actual_audio_path is None else str(actual_audio_path)
         ),
-        voice_type=voice_type,
+        voice_types=voice_types,
         start_step=start_step,
         end_step=end_step,
     )

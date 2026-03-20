@@ -34,7 +34,7 @@ def _build_status(task_id: str) -> tuple[TaskStatusEnum, int, str, str | None]:
     return status, progress, current_step, error_detail
 
 
-@router.get("/task_id/{task_id}", response_model=TaskFilesResult)
+@router.get("/{task_id}", response_model=TaskFilesResult)
 async def get_task_result_files(task_id: str):
     task_dir = _resolve_task_dir(task_id)
 
@@ -69,7 +69,7 @@ async def get_task_result_files(task_id: str):
     )
 
 
-@router.get("/task_id/{task_id}/download")
+@router.get("/{task_id}/download")
 async def download_task_file(task_id: str, file: str = Query(..., description="Task relative file path")):
     task_dir = _resolve_task_dir(task_id)
 

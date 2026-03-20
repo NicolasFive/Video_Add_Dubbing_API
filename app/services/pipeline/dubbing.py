@@ -9,7 +9,7 @@ from app.models.domain import ProcessingContext
 from app.services.pipeline import (
     BasePipelineStage,
     PipelineStageConfig,
-    build_default_stage_configs,
+    build_stage_configs,
     build_stage_registry,
 )
 
@@ -27,7 +27,7 @@ class DubbingPipeline:
         # 保存上下文，作为各环节之间的数据桥梁
         self.ctx = context
         # 使用外部传入配置，未传入时使用默认流程配置
-        self.stage_configs = stage_configs or build_default_stage_configs()
+        self.stage_configs = stage_configs or build_stage_configs()
         # 构建默认环节实现注册表
         self.stage_registry = build_stage_registry()
         # 允许外部覆盖或扩展环节实现
@@ -95,14 +95,14 @@ class DubbingPipeline:
             # 根据 start_step 解析本次需要执行的环节列表
             execution_stages = self._resolve_execution_stages(start_step)
             for stage_cfg in execution_stages:
-                name = stage_cfg.name
+                key = stage_cfg.key
                 progress = stage_cfg.progress
                 # 回调上报当前环节进度
                 if update_progress_callback:
-                    update_progress_callback(name, progress)
-                logger.info(f"Task {self.ctx.task_id}: {name}...")
+                    update_progress_callback(key, progress)
+                logger.info(f"Task {self.ctx.task_id}: {key}...")
                 # 记录当前环节，便于失败后断点续传
-                self.ctx.current_step = name
+                self.ctx.current_step = key
                 # 调用具体环节实现
                 self._run_stage(stage_cfg)
                 # 保存上下文以支持断点续传
@@ -110,12 +110,12 @@ class DubbingPipeline:
                 with open(context_file, "wb") as f:
                     pickle.dump(self.ctx, f)
                 # 判断是否设置结束步骤，是则判断当前是否需要结束
-                if end_step and self._is_step_matched(stage_cfg, end_step):
+                if end_step and stage_cfg.key == end_step:
                     break
 
-            # 全部执行完成后统一上报 100%
+            # 全部执行完成后统一上报Completed，但是进度仍然保持最后一个环节的值
             if update_progress_callback:
-                update_progress_callback("Completed", 100)
+                update_progress_callback("Completed", progress)
             logger.info(f"Task {self.ctx.task_id} Success!")
 
             return self.ctx
@@ -131,18 +131,14 @@ class DubbingPipeline:
         enabled_stages = [cfg for cfg in self.stage_configs if cfg.enabled]
         start_index = 0
         if start_step:
-            # 支持通过 name 或 key 匹配起始环节
+            # 支持通过 key 匹配起始环节
             for i, cfg in enumerate(enabled_stages):
-                if self._is_step_matched(cfg, start_step):
+                if cfg.key == start_step:
                     start_index = i
                     break
         # 返回从起始环节到末尾的执行列表
         return enabled_stages[start_index:]
 
-    # 判断输入步骤标识是否匹配当前环节（name 或 key）
-    @staticmethod
-    def _is_step_matched(stage_cfg: PipelineStageConfig, step: str) -> bool:
-        return step in {stage_cfg.name, stage_cfg.key}
 
     # 执行单个环节
     def _run_stage(self, stage_cfg: PipelineStageConfig) -> None:

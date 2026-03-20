@@ -13,10 +13,17 @@ class BasePipelineStage(ABC):
     @abstractmethod
     def run(self, ctx: ProcessingContext) -> None:
         raise NotImplementedError
-    
-    
+
+    @abstractmethod
+    def get_data(self, ctx: ProcessingContext) -> list[dict]| dict| str:
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_data(self, ctx: ProcessingContext, data: list[dict] | dict | str) -> None:
+        raise NotImplementedError
+
     @staticmethod
-    def _save_log(ctx: ProcessingContext, log_name: str = "",log_data=None) -> None:
+    def _save_log(ctx: ProcessingContext, log_name: str = "", log_data=None) -> None:
         if log_data is None:
             log_data = {}
         log_path = ctx.work_dir / f"{log_name}.json"

@@ -20,7 +20,7 @@ def run_dubbing_task(
     task_id: str,
     input_video_path_str: Optional[str],
     input_audio_path_str: Optional[str],
-    voice_type: str,
+    voice_types: list[str],
     start_step: str = None,
     end_step: str = None,
 ):
@@ -34,7 +34,7 @@ def run_dubbing_task(
         input_video_path=input_video_path,
         input_audio_path=input_audio_path,
         work_dir=work_dir,
-        voice_type=voice_type,
+        voice_types=voice_types,
     )
 
     # 如果指定了 start_step，尝试加载之前保存的上下文
@@ -46,7 +46,7 @@ def run_dubbing_task(
             # 更新可能变化的参数
             ctx.input_video_path = ctx.input_video_path if not input_video_path else input_video_path
             ctx.input_audio_path = ctx.input_audio_path if not input_audio_path else input_audio_path
-            ctx.voice_type = ctx.voice_type if not voice_type else voice_type
+            ctx.voice_types = ctx.voice_types if not voice_types else voice_types
 
     def update_progress(step, percent, error=None):
         # 更新 Redis 中的任务状态
@@ -59,10 +59,7 @@ def run_dubbing_task(
         # 移动结果到永久存储目录
         # final_dest = Path(settings.STORAGE_ROOT) / settings.RESULT_DIR / task_id
         # shutil.move(result_ctx.final_video_path, final_dest)
-
-        # 更新状态为 Success
-        save_task_status(task_id, TaskStatusEnum.SUCCESS.value, 100, "Completed", None)
-        return {"status": "success", "video_path": str(result_ctx.final_video_path)}
+        return {"status": "success"}
 
     except Exception as exc:
         # 更新状态为 Failed
@@ -85,7 +82,7 @@ def run_dubbing_task(
             'task_id': task_id,
             'input_video_path_str': input_video_path_str,
             'input_audio_path_str': input_audio_path_str,
-            'voice_type': voice_type,
+            'voice_types': voice_types,
             'start_step': retry_start_step,
             'end_step': end_step,
         })

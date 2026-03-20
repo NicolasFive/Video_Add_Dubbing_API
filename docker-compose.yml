@@ -23,6 +23,8 @@ services:
       - ./storage:/app/storage
       - ./app:/app/app
       - ./scripts:/app/scripts
+      - ./pyproject.toml:/app/pyproject.toml
+      - ./.env.prod:/app/.env
     restart: unless-stopped
     deploy:
       resources:

@@ -32,3 +32,17 @@ class OpenAITranslateStage(BasePipelineStage):
                 for item in translations
             ],
         )
+    
+    def get_data(self, ctx: ProcessingContext) -> list[dict]:
+        return [asdict(item) for item in ctx.translations]
+
+    def set_data(self, ctx: ProcessingContext, data: list[dict]) -> None:
+        ctx.translations = [TranslateLine(**item) for item in data]
+        self._save_log(
+            ctx,
+            log_name="translations",
+            log_data=[
+                asdict(item)
+                for item in ctx.translations
+            ],
+        )

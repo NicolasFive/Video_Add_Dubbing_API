@@ -149,7 +149,7 @@ Content-Type：`multipart/form-data`
 | --- | --- | --- | --- | --- |
 | `video` | form-data | file | 条件必填 | 上传源视频文件。 |
 | `audio` | form-data | file | 条件必填 | 上传源音频文件（纯音频配音流程）。 |
-| `voice_type` | form-data | string | 否 | TTS 说话人/音色类型。 |
+| `voice_types` | form-data | array[string] | 是 | 多说话人音色列表。可通过重复字段提交多个值（例如 `-F "voice_types=a" -F "voice_types=b"`）。 |
 | `task_id` | form-data | string | 否 | 任务 ID；不传则自动生成。可用于断点续跑/重试。 |
 | `start_step` | form-data | string | 否 | 从指定流程步骤开始（需填写精确步骤名）。 |
 | `end_step` | form-data | string | 否 | 在指定流程步骤结束。 |
@@ -173,7 +173,8 @@ Content-Type：`multipart/form-data`
 ```bash
 curl -X POST "http://127.0.0.1:8000/v1/dubbing" \
   -F "video=@./sample.mp4" \
-  -F "voice_type=zh_female_meilinvyou" \
+  -F "voice_types=zh_female_xiaohe_uranus_bigtts" \
+  -F "voice_types=zh_male_wennuanahu_moon_bigtts"
 ```
 
 响应示例：
@@ -187,7 +188,7 @@ curl -X POST "http://127.0.0.1:8000/v1/dubbing" \
 }
 ```
 
-### 5.2 `GET /v1/status/task_id/{task_id}`
+### 5.2 `GET /v1/status/{task_id}`
 
 用途：查询任务状态与进度。
 
@@ -212,7 +213,7 @@ curl -X POST "http://127.0.0.1:8000/v1/dubbing" \
 请求示例：
 
 ```bash
-curl "http://127.0.0.1:8000/v1/status/task_id/<task_id>"
+curl "http://127.0.0.1:8000/v1/status/<task_id>"
 ```
 
 响应示例：
@@ -229,7 +230,7 @@ curl "http://127.0.0.1:8000/v1/status/task_id/<task_id>"
 }
 ```
 
-### 5.3 `GET /v1/result/task_id/{task_id}`
+### 5.3 `GET /v1/result/{task_id}`
 
 用途：按任务查询已生成文件列表，并返回对应下载链接。
 
@@ -258,7 +259,7 @@ curl "http://127.0.0.1:8000/v1/status/task_id/<task_id>"
 请求示例：
 
 ```bash
-curl "http://127.0.0.1:8000/v1/result/task_id/<task_id>"
+curl "http://127.0.0.1:8000/v1/result/<task_id>"
 ```
 
 响应示例：
@@ -273,14 +274,14 @@ curl "http://127.0.0.1:8000/v1/result/task_id/<task_id>"
       "relative_path": "final_video_path.mp4",
       "size_bytes": 27834567,
       "updated_at": "2026-03-13T11:32:10",
-      "download_url": "/v1/result/task_id/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/download?file=final_video_path.mp4"
+      "download_url": "/v1/result/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/download?file=final_video_path.mp4"
     },
     {
       "file_name": "subtitles.srt",
       "relative_path": "subtitles.srt",
       "size_bytes": 9210,
       "updated_at": "2026-03-13T11:31:20",
-      "download_url": "/v1/result/task_id/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/download?file=subtitles.srt"
+      "download_url": "/v1/result/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/download?file=subtitles.srt"
     }
   ],
   "progress": 100,
@@ -289,7 +290,7 @@ curl "http://127.0.0.1:8000/v1/result/task_id/<task_id>"
 }
 ```
 
-### 5.4 `GET /v1/result/task_id/{task_id}/download`
+### 5.4 `GET /v1/result/{task_id}/download`
 
 用途：根据任务内相对路径下载指定产物文件。
 
@@ -306,10 +307,138 @@ curl "http://127.0.0.1:8000/v1/result/task_id/<task_id>"
 请求示例：
 
 ```bash
-curl -L "http://127.0.0.1:8000/v1/result/task_id/<task_id>/download?file=subtitles.srt" -o subtitles.srt
+curl -L "http://127.0.0.1:8000/v1/result/<task_id>/download?file=subtitles.srt" -o subtitles.srt
 ```
 
-### 5.5 `GET /v1/health`
+### 5.5 `GET /v1/pipline/config`
+
+用途：获取当前系统内置的 pipeline 阶段配置列表。
+
+#### 请求参数
+
+无。
+
+#### 成功响应（`200`）
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `stages` | array | 流程阶段列表。 |
+| `stages[].key` | string | 阶段唯一标识。 |
+| `stages[].name` | string | 阶段显示名称。 |
+
+请求示例：
+
+```bash
+curl "http://127.0.0.1:8000/v1/pipline/config"
+```
+
+响应示例：
+
+```json
+{
+  "stages": [
+    {
+      "key": "Analyzing Video",
+      "name": "分析视频"
+    },
+    {
+      "key": "Translating",
+      "name": "翻译"
+    },
+    {
+      "key": "Optimizing Subtitles",
+      "name": "优化字幕"
+    }
+  ]
+}
+```
+
+### 5.6 `GET /v1/optimize/{task_id}`
+
+用途：读取指定任务某个流程阶段的数据（从 `context.pkl` 加载上下文后调用对应 stage 的 `get_data`），并以 JSON 字符串返回。
+
+#### 路径参数
+
+| 名称 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `task_id` | string | 是 | 任务 ID。 |
+
+#### 查询参数
+
+| 名称 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `stage` | string | 是 | 流程阶段名或 key（例如 `Translating` 或 `translate`）。 |
+
+#### 成功响应（`200`）
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `task_id` | string | 任务 ID。 |
+| `stage` | string | 标准化后的阶段名。 |
+| `data` | string | 阶段数据的 JSON 字符串。 |
+
+请求示例：
+
+```bash
+curl "http://127.0.0.1:8000/v1/optimize/<task_id>?stage=Translating"
+```
+
+响应示例：
+
+```json
+{
+  "task_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "stage": "Translating",
+  "data": "[{\"original_text\":\"Hello\",\"translated_text\":\"你好\"}]"
+}
+```
+
+### 5.7 `POST /v1/optimize/{task_id}`
+
+用途：解析上传的 JSON 字符串，修改指定任务某个流程阶段的数据（从 `context.pkl` 读取上下文并调用对应 stage 的 `set_data`），修改后保存回 `context.pkl`。
+
+Content-Type：`multipart/form-data`
+
+#### 请求参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| `stage` | form-data | string | 是 | 流程阶段名或 key（例如 `Translating` / `translate`）。 |
+| `data` | form-data | string | 是 | 阶段数据 JSON 字符串。 |
+
+#### 成功响应（`200`）
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `task_id` | string | 任务 ID。 |
+| `stage` | string | 标准化后的阶段名。 |
+| `message` | string | 更新结果消息。 |
+
+请求示例：
+
+```bash
+curl -X POST "http://127.0.0.1:8000/v1/optimize/<task_id>" \
+  -F "stage=Translating" \
+  -F "data=[{\"original_text\":\"Hello\",\"translated_text\":\"你好，世界\"}]"
+```
+
+响应示例：
+
+```json
+{
+  "task_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "stage": "Translating",
+  "message": "stage data updated"
+}
+```
+
+说明：
+
+- 调用 optimize 接口前，任务目录下必须存在 `context.pkl`。
+- 若阶段未实现 `get_data` / `set_data`，接口会返回 `400`。
+- 当前建议优先用于翻译阶段数据（`Translating`）。
+
+### 5.8 `GET /v1/health`
 
 用途：API 与依赖组件健康检查。
 

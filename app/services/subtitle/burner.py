@@ -28,6 +28,13 @@ class FFmpegBurner:
         outline_width = int(subtitle_font_size * 0.12)
         shadow_depth = int(subtitle_font_size * 0.05) # 阴影深度
 
+        # 根据视频宽高设置 PlayRes，确保字幕相对大小
+        if video_width>video_height:
+            video_width = 1920
+            video_height = 1080
+        else:
+            video_width = 1080
+            video_height = 1920
         style_configs = [
             f"FontSize={subtitle_font_size}",
             f"PlayResX={video_width}",       # 强制匹配视频分辨率，防止缩放模糊

@@ -46,3 +46,25 @@ class TaskFilesResult(BaseModel):
     progress: int = Field(0, ge=0, le=100)
     current_step: Optional[str] = None
     error_detail: Optional[str] = None
+
+
+class OptimizeDataResult(BaseModel):
+    task_id: str
+    stage: str
+    data: str
+
+
+class OptimizeUpdateResult(BaseModel):
+    task_id: str
+    stage: str
+    message: str
+
+
+class PipelineConfigItem(BaseModel):
+    key: str
+    name: str
+
+
+class PipelineConfigResult(BaseModel):
+    stages: List[PipelineConfigItem] = Field(default_factory=list)
+

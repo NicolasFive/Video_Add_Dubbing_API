@@ -15,18 +15,23 @@ class SubtitleGenerator:
         output_path: Path,
         video_width: int,
         font_size: int,
-        max_lines_on_screen: int = 2,
+        max_lines_on_screen: int = 1,
+        original_text_on: bool = True,
     ):
         handled_subtitles = self._split_long_subtitles(
-            subtitles, video_width, font_size, max_lines_on_screen
+            subtitles, video_width, font_size, max_lines_on_screen,original_text_on
         )
+        # handled_subtitles = subtitles
         with open(output_path, "w", encoding="utf-8") as f:
             for i, sub in enumerate(handled_subtitles):
                 f.write(f"{i+1}\n")
                 f.write(
                     f"{self._ms_to_srt_time(sub.start_ms)} --> {self._ms_to_srt_time(sub.end_ms)}\n"
                 )
-                f.write(f"{sub.text}\n\n")
+                if original_text_on:
+                    f.write(f"{sub.translated_text}\n{sub.original_text}\n\n")
+                else:
+                    f.write(f"{sub.translated_text}\n\n")
 
     def _ms_to_srt_time(self, ms: int) -> str:
         """
@@ -45,7 +50,8 @@ class SubtitleGenerator:
         subtitles: list[SubtitleLine],
         video_width: int,
         font_size: int,
-        max_lines_on_screen: int = 2,
+        max_lines_on_screen: int = 1,
+        original_text_on: bool = True,
     ) -> list[SubtitleLine]:
         """
         处理字幕列表，将过长的 text 拆分为多行，避免遮挡画面。
@@ -55,6 +61,7 @@ class SubtitleGenerator:
         :param video_width: 视频宽度 (像素)
         :param font_size: 字体大小 (像素)
         :param max_lines_on_screen: 允许屏幕上同时显示的最大行数 (竖屏建议 1~2)
+        :param original_text_on: 是否显示原文
         :return: 处理后的新 SubtitleLine 列表
         """
 
@@ -75,7 +82,7 @@ class SubtitleGenerator:
         handled_subtitles = []
 
         for sub in subtitles:
-            text_to_process = sub.text
+            text_to_process = sub.translated_text
             # 1. 移除文本中的标点符号（感叹号、问号、百分号除外）
             cleaned_text = re.sub(r"[.,;,.;、，。；—…]", "  ", text_to_process)
 
@@ -84,23 +91,28 @@ class SubtitleGenerator:
                 handled_subtitles.append(SubtitleLine(
                     start_ms=sub.start_ms,
                     end_ms=sub.end_ms,
-                    text=text_to_process,
+                    original_text=sub.original_text,
+                    translated_text=sub.translated_text,
                 ))
                 continue
             # 2. 逐行判断文本长度，超过限制则拆分
             lines_within_limit = []
+            lines_split_num = []
             for line in cleaned_text.splitlines():
                 # 判断该行长度是否超过限制，超过则拆分
                 if len(line) > max_chars_per_line:
                     # 智能拆分文本
                     segments = self._smart_split_text(line, max_chars_per_line)
                     lines_within_limit.extend(segments)
+                    lines_split_num.append(len(segments))
                 else:
                     lines_within_limit.append(line)
+                    lines_split_num.append(1)
             
             # 3. 将拆分后的行重新组合成新的 SubtitleLine 对象，时间轴均匀分布
             start_ms = sub.start_ms
             duration_ms = sub.end_ms - sub.start_ms
+            arr = []
             for i in range(0, len(lines_within_limit), max_lines_on_screen):
                 seg_text = "\n".join(lines_within_limit[i : i + max_lines_on_screen])
                 # 计算结束时间
@@ -110,13 +122,22 @@ class SubtitleGenerator:
                     current_end = int(
                         start_ms + (duration_ms / len(cleaned_text)) * len(seg_text)
                     )
-                handled_subtitles.append(SubtitleLine(
+                arr.append(SubtitleLine(
                     start_ms=start_ms,
                     end_ms=current_end,
-                    text=seg_text,  # 使用拆分后的短句
+                    original_text="",
+                    translated_text=seg_text,  # 使用拆分后的短句
                 ))
                 start_ms = current_end  # 下一段开始时间紧跟上一段结束时间
-                
+            
+            # 4. 判断是否需要添加原文
+            original_text_arr = sub.original_text.splitlines() if sub.original_text else []
+            if original_text_on:
+                idx=0
+                for i, num in enumerate(lines_split_num):
+                    arr[idx].original_text = original_text_arr[i] if i < len(original_text_arr) else ""
+                    idx+=num
+            handled_subtitles.extend(arr)
         return handled_subtitles
 
     def _smart_split_text(self, text: str, max_len: int) -> list[str]:

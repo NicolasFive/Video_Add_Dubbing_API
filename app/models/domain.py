@@ -18,7 +18,8 @@ class DurationRating(str, Enum):
 class SubtitleLine:
     start_ms: int
     end_ms: int
-    text: str
+    original_text: str
+    translated_text: str
     sentiment: Optional[Sentiment] = None
     speaker: Optional[str] = None
     # 播放速率及评级
@@ -53,7 +54,7 @@ class ProcessingContext:
     input_video_path: Path
     input_audio_path: Path
     work_dir: Path
-    voice_type: str
+    voice_types: list[str] = field(default_factory=list)
 
     # 当前执行的步骤，用于断点续传
     current_step: Optional[str] = None
@@ -70,6 +71,7 @@ class ProcessingContext:
     transcripts: List[TranscriptLine] = field(default_factory=list)
     translations: List[TranslateLine] = field(default_factory=list)
     subtitles: List[SubtitleLine] = field(default_factory=list)
+    optimized_subtitles: List[SubtitleLine] = field(default_factory=list)
 
     # 最终结果
     final_video_path: Optional[Path] = None

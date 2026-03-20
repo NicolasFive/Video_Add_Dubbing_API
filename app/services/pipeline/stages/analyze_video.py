@@ -17,6 +17,12 @@ class FFprobeAnalyzeVideoStage(BasePipelineStage):
         ctx.input_video_height = height
         self._save_log(ctx, log_name="video_info", log_data={"width": width, "height": height})
 
+    def get_data(self, ctx):
+        pass
+
+    def set_data(self, ctx, data):
+        pass
+
     @staticmethod
     def _get_video_dimensions(video_path) -> tuple[int, int]:
         # 使用 ffprobe 获取视频信息

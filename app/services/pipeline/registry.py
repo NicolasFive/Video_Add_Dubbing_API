@@ -6,7 +6,8 @@ from app.services.pipeline.stages import (
     DemucsSeparateVocalsStage,
     AssemblyAITranscribeStage,
     OpenAITranslateStage,
-    RuleBasedBuildSubtitlesDataStage,
+    OptimizeSubtitlesStage,
+    BuildSubtitlesStage,
     OpenAIReduceTextStage,
     VolcengineSynthesizeVoiceStage,
     VolcengineV2SynthesizeVoiceStage,
@@ -14,46 +15,50 @@ from app.services.pipeline.stages import (
     FFmpegReplaceAudioStage,
     RuleBasedGenerateSubtitlesStage,
     FFmpegBurnSubtitlesStage,
+    CompleteStage,
+    FFmpegOriginalSwapStage
 )
 STAGE_BUILDERS = {
-    "analyze_video": FFprobeAnalyzeVideoStage,
-    "separate_vocals": DemucsSeparateVocalsStage,
-    "transcribe": AssemblyAITranscribeStage,
-    "translate": OpenAITranslateStage,
-    "build_subtitles_data": RuleBasedBuildSubtitlesDataStage,
-    "reduce_text": OpenAIReduceTextStage,
-    "synthesize_voice": VolcengineSynthesizeVoiceStage,
-    "synthesize_voice_v2": VolcengineV2SynthesizeVoiceStage,
-    "mix_audio": PydubMixAudioStage,
-    "replace_audio": FFmpegReplaceAudioStage,
-    "generate_subtitles": RuleBasedGenerateSubtitlesStage,
-    "burn_subtitles": FFmpegBurnSubtitlesStage,
+    "Analyzing Video": FFprobeAnalyzeVideoStage,
+    "Separating Vocals": DemucsSeparateVocalsStage,
+    "Transcribing": AssemblyAITranscribeStage,
+    "Translating": OpenAITranslateStage,
+    "Building Subtitles": BuildSubtitlesStage,
+    "Optimizing Subtitles": OptimizeSubtitlesStage,
+    "Reducing Text": OpenAIReduceTextStage,
+    "Synthesizing Voice": VolcengineSynthesizeVoiceStage,
+    "Synthesizing Voice V2": VolcengineV2SynthesizeVoiceStage,
+    "Mixing Audio": PydubMixAudioStage,
+    "Replacing Audio": FFmpegReplaceAudioStage,
+    "Generating Subtitles": RuleBasedGenerateSubtitlesStage,
+    "Burning Subtitles": FFmpegBurnSubtitlesStage,
+    "Original Swap": FFmpegOriginalSwapStage,
+    "Complete": CompleteStage,
 }
 
 DEFAULT_STAGE_CONFIGS = [
-    PipelineStageConfig("analyze_video", "Analyzing Video", 5),
-    PipelineStageConfig("separate_vocals", "Separating Vocals", 10),
-    PipelineStageConfig("transcribe", "Transcribing", 20),
-    PipelineStageConfig("translate", "Translating", 30),
-    PipelineStageConfig("build_subtitles_data", "Building Subtitles Data", 40),
-    PipelineStageConfig("synthesize_voice_v2", "Synthesizing Voice", 50),
-    PipelineStageConfig("mix_audio", "Mixing Audio", 60),
-    PipelineStageConfig("replace_audio", "Replacing Audio", 70),
-    PipelineStageConfig("generate_subtitles", "Generating Subtitles", 80),
-    PipelineStageConfig("burn_subtitles", "Burning Subtitles", 90),
+    PipelineStageConfig("Analyzing Video", "分析视频", 5),
+    PipelineStageConfig("Separating Vocals", "分离人声", 10),
+    PipelineStageConfig("Transcribing", "转录", 20),
+    PipelineStageConfig("Translating", "翻译", 30),
+    PipelineStageConfig("Building Subtitles", "生成字幕", 40),
+    PipelineStageConfig("Optimizing Subtitles", "优化字幕", 48),
+    PipelineStageConfig("Synthesizing Voice V2", "豆包语音合成2.0", 50),
+    # PipelineStageConfig("Synthesizing Voice", "豆包语音合成1.0", 50),
+    PipelineStageConfig("Mixing Audio", "混合音频", 60),
+    PipelineStageConfig("Replacing Audio", "替换音频", 70),
+    PipelineStageConfig("Generating Subtitles", "生成字幕", 80),
+    PipelineStageConfig("Burning Subtitles", "烧录字幕", 90),
+    PipelineStageConfig("Original Swap", "原声置换", 95),
+    PipelineStageConfig("Complete", "完成", 100),
 ]
 
-OPTIONAL_STAGE_CONFIGS = [
-    PipelineStageConfig("reduce_text", "Reducing Text", 45),
-]
 
 
 def build_stage_registry():
     return {key: stage_cls() for key, stage_cls in STAGE_BUILDERS.items()}
 
 
-def build_default_stage_configs(include_optional: bool = False):
+def build_stage_configs()-> list[PipelineStageConfig]:
     configs = list(DEFAULT_STAGE_CONFIGS)
-    if include_optional:
-        configs.extend(OPTIONAL_STAGE_CONFIGS)
     return configs
