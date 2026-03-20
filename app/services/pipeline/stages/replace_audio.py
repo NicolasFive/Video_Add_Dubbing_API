@@ -15,6 +15,10 @@ class FFmpegReplaceAudioStage(BasePipelineStage):
             return
         video_with_dubbing = ctx.work_dir / "video_with_dubbing.mp4"
         mixed_audio_path = ctx.work_dir / "mixed_audio.wav"
+        
+        if not mixed_audio_path.exists():
+            mixed_audio_path = ctx.input_audio_path
+
         self.replacer.replace(
             ctx.input_video_path, mixed_audio_path, video_with_dubbing
         )

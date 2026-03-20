@@ -16,6 +16,10 @@ class FFmpegBurnSubtitlesStage(BasePipelineStage):
         video_with_dubbing = ctx.work_dir / "video_with_dubbing.mp4"
         srt_path = ctx.work_dir / "subtitles.srt"
         final_video_path = ctx.work_dir / "final_video.mp4"
+
+        if not video_with_dubbing.exists():
+            video_with_dubbing = ctx.input_video_path
+            
         self.sub_burner.burn(
             video_with_dubbing,
             srt_path,
