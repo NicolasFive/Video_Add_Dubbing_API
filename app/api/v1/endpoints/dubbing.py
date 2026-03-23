@@ -16,6 +16,7 @@ from typing import Optional
 from datetime import datetime
 import logging
 from app.utils.redis_oper import save_task_status
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -35,7 +36,7 @@ def validate_params(
 
 async def get_actual_file_path(
     task_id: Optional[str], file: Optional[UploadFile]
-):
+)-> Path:
     actual_file_path = None
     # 情况1：上传了文件
     if file is not None:
@@ -50,6 +51,7 @@ async def submit_dubbing_task(
     video: Optional[UploadFile] = File(None),
     audio: Optional[UploadFile] = File(None),
     voice_types: Optional[list[str]] = Form(None),
+    line_type: Optional[str] = Form(None),
     task_id: Optional[str] = Form(None),
     start_step: Optional[str] = Form(None),
     end_step: Optional[str] = Form(None),
@@ -59,7 +61,10 @@ async def submit_dubbing_task(
     # 2. 生成 Task ID
     if not task_id:
         task_id = str(uuid.uuid4())
-    # 3. 获取文件路径
+    # 3. 设置默认 line_type
+    if not line_type:
+        line_type = "default"
+    # 4. 获取文件路径
     actual_video_path = await get_actual_file_path(
         task_id=task_id, file=video
     )
@@ -67,22 +72,19 @@ async def submit_dubbing_task(
         task_id=task_id, file=audio
     )
     
-    logger.info(f"Received task {task_id}")
+    logger.info(f"Received task {task_id} with line_type={line_type}")
 
-    # 4. 初始化任务状态 (存入 Redis/DB)
+    # 5. 初始化任务状态 (存入 Redis/DB)
     save_task_status(task_id, TaskStatusEnum.PENDING.value, 0, "Queueing...")
 
-    # 5. 触发异步任务
+    # 6. 触发异步任务
     # 注意：Celery 任务需要序列化路径
     run_dubbing_task.delay(
         task_id=task_id,
-        input_video_path_str=(
-            None if actual_video_path is None else str(actual_video_path)
-        ),
-        input_audio_path_str=(
-            None if actual_audio_path is None else str(actual_audio_path)
-        ),
+        input_video_path=str(actual_video_path) if actual_video_path else None,
+        input_audio_path=str(actual_audio_path) if actual_audio_path else None,
         voice_types=voice_types,
+        line_type=line_type,
         start_step=start_step,
         end_step=end_step,
     )

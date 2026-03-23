@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Optional
-from pathlib import Path
 
 
 class Sentiment(str, Enum):
@@ -27,7 +26,7 @@ class SubtitleLine:
     tts_eval_speed_ratio: Optional[float] = None
     tts_expected_speed_ratio: Optional[float] = None
 
-    translated_tts_path: Optional[Path] = None
+    translated_tts_path: Optional[str] = None
 
     @property
     def tts_expected_duration_ms(self) -> int:
@@ -51,10 +50,11 @@ class ProcessingContext:
     """贯穿整个 Pipeline 的上下文对象"""
 
     task_id: str
-    input_video_path: Path
-    input_audio_path: Path
-    work_dir: Path
+    input_video_path: Optional[str]
+    input_audio_path: Optional[str]
+    work_dir: str
     voice_types: list[str] = field(default_factory=list)
+    line_type: str = "default"  # 用于选择不同的 STAGE_CONFIGS
 
     # 当前执行的步骤，用于断点续传
     current_step: Optional[str] = None
@@ -63,9 +63,9 @@ class ProcessingContext:
     input_video_width: Optional[int] = None
     input_video_height: Optional[int] = None
     subtitle_font_size: Optional[int] = None
-    vocals_audio_path: Optional[Path] = None
-    instrumentals_audio_path: Optional[Path] = None
-    transcript_json_path: Optional[Path] = None
+    vocals_audio_path: Optional[str] = None
+    instrumentals_audio_path: Optional[str] = None
+    transcript_json_path: Optional[str] = None
 
     # 数据对象
     transcripts: List[TranscriptLine] = field(default_factory=list)
@@ -74,8 +74,8 @@ class ProcessingContext:
     optimized_subtitles: List[SubtitleLine] = field(default_factory=list)
 
     # 最终结果
-    final_video_path: Optional[Path] = None
-    final_subtitle_path: Optional[Path] = None
+    final_video_path: Optional[str] = None
+    final_subtitle_path: Optional[str] = None
 
 @dataclass
 class ReducerData:

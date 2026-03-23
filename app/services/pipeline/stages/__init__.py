@@ -2,6 +2,7 @@ from app.services.pipeline.stages.analyze_video import FFprobeAnalyzeVideoStage
 from app.services.pipeline.stages.build_subtitles_data import (
     OptimizeSubtitlesStage,
     BuildSubtitlesStage,
+    OptimizeSubtitlesWithoutSpeedCheckStage
 )
 from app.services.pipeline.stages.burn_subtitles import FFmpegBurnSubtitlesStage
 from app.services.pipeline.stages.generate_subtitles import (
@@ -37,4 +38,5 @@ __all__ = [
     "FFmpegBurnSubtitlesStage",
     "CompleteStage",
     "FFmpegOriginalSwapStage",
+    "OptimizeSubtitlesWithoutSpeedCheckStage"
 ]

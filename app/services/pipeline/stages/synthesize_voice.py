@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 import re
 
 from app.models.domain import ProcessingContext, Sentiment
@@ -18,7 +19,7 @@ class VolcengineSynthesizeVoiceStage(BasePipelineStage):
         speaker_voice_map = {}
 
         for i, sub in enumerate(ctx.optimized_subtitles):
-            tts_path = ctx.work_dir / f"tts_{i}.wav"
+            tts_path = Path(ctx.work_dir) / f"tts_{i}.wav"
             
             emotion = (
                 "angry"
@@ -45,7 +46,7 @@ class VolcengineSynthesizeVoiceStage(BasePipelineStage):
                 voice_type=speaker_voice_map[sub.speaker],
                 emotion=emotion,
             )
-            sub.translated_tts_path = tts_path
+            sub.translated_tts_path = str(tts_path)
 
     def get_data(self, ctx):
         pass
@@ -79,7 +80,7 @@ class VolcengineV2SynthesizeVoiceStage(BasePipelineStage):
         # 2. 再合成语音，传入情绪文本作为上下文提示
         speaker_voice_map = {}
         for i, sub in enumerate(ctx.optimized_subtitles):
-            tts_path = ctx.work_dir / f"tts_{i}.wav"
+            tts_path = Path(ctx.work_dir) / f"tts_{i}.wav"
 
             if self._check_speech_text_is_blank(sub.translated_text):
                 sub.translated_tts_path = None
@@ -101,7 +102,7 @@ class VolcengineV2SynthesizeVoiceStage(BasePipelineStage):
                 context_texts=[context_texts[i]] if context_texts[i] else None,
                 section_id=ctx.task_id,  # 传入上下文标识
             )
-            sub.translated_tts_path = tts_path
+            sub.translated_tts_path = str(tts_path)
 
     def get_data(self, ctx):
         pass

@@ -13,7 +13,7 @@ class DemucsSeparateVocalsStage(BasePipelineStage):
     def run(self, ctx: ProcessingContext) -> None:
         audio_path = (
             ctx.input_audio_path
-            if ctx.input_audio_path is not None
+            if ctx.input_audio_path
             else ctx.input_video_path
         )
         vocals_path, inst_path = self.separator.separate(audio_path, ctx.work_dir)

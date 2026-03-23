@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import json
 
 from app.models.domain import ProcessingContext
+from pathlib import Path
 
 
 class BasePipelineStage(ABC):
@@ -26,7 +27,8 @@ class BasePipelineStage(ABC):
     def _save_log(ctx: ProcessingContext, log_name: str = "", log_data=None) -> None:
         if log_data is None:
             log_data = {}
-        log_path = ctx.work_dir / f"{log_name}.json"
+
+        log_path = Path(ctx.work_dir) / f"{log_name}.json"
         with open(log_path, "w", encoding="utf-8") as f:
             json.dump(log_data, f, ensure_ascii=False, indent=2)
 

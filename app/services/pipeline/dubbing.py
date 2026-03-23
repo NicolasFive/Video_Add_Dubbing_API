@@ -12,6 +12,7 @@ from app.services.pipeline import (
     build_stage_configs,
     build_stage_registry,
 )
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +107,7 @@ class DubbingPipeline:
                 # 调用具体环节实现
                 self._run_stage(stage_cfg)
                 # 保存上下文以支持断点续传
-                context_file = self.ctx.work_dir / "context.pkl"
+                context_file = Path(self.ctx.work_dir) / "context.pkl"
                 with open(context_file, "wb") as f:
                     pickle.dump(self.ctx, f)
                 # 判断是否设置结束步骤，是则判断当前是否需要结束

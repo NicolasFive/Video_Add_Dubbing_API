@@ -11,6 +11,7 @@ from app.services.tts.volcengine.binary import run_volcengine
 import math
 from typing import Optional
 from pydantic import BaseModel
+from app.utils.audio_utils import get_audio_duration
 import re
 
 logger = logging.getLogger(__name__)
@@ -74,7 +75,7 @@ class VolcanoTTSService:
             raise Exception("TTS generation failed")
 
         # 1. 获取生成的音频时长
-        actual_duration_sec = self.get_audio_duration(output_path)
+        actual_duration_sec = get_audio_duration(output_path)
         actual_duration_ms = round(actual_duration_sec * 1000)
 
         # 2. 如果没有期望时长或实际时长已经接近目标时长，则直接返回
@@ -92,20 +93,21 @@ class VolcanoTTSService:
         adjust_ratio = (
             math.ceil(adjust_ratio * 100) / 100
         )  # 保留两位小数，向上取整，避免略微不足导致音频过短
-        # 限制速率范围 [1, 2.0] 以保证音质
-        adjust_ratio = max(1, min(2.0, adjust_ratio))
         logger.info(
             f"Audio speed adjustment: actual={actual_duration_ms:.3f}ms, "
             f"target={expect_duration_ms:.3f}ms, speed_ratio={adjust_ratio:.2f}"
         )
 
-        # 4.2 如果加速速率大于1.2，则重新调用TTS生成
-        if adjust_ratio > 1.2 and retry:
+        # 4.2 如果加速速率大于1.2或小于0.7，则重新调用TTS生成
+        if (adjust_ratio > 1.2 or adjust_ratio < 0.8) and retry:
             logger.info(
-                f"Speed ratio {adjust_ratio:.2f} is too high, regenerating TTS with adjusted parameters"
+                f"Speed ratio {adjust_ratio:.2f} is out of acceptable range, regenerating TTS with adjusted parameters"
             )
             # 重新计算参数speed_ratio
-            new_speed_ratio = min(2.0, (speed_ratio * adjust_ratio))
+            new_speed_ratio = speed_ratio * adjust_ratio
+            if adjust_ratio<1.0:
+                new_speed_ratio += 0.1
+            new_speed_ratio = max(0.5, min(2.0, new_speed_ratio))
             return self.fallback_exec(
                 voice_type=voice_type,
                 text=text,
@@ -116,79 +118,8 @@ class VolcanoTTSService:
                 expect_duration_ms=expect_duration_ms,
                 retry=False
             )
-        
-        # 4.3 ffmpeg 使用 atempo 滤镜应用速率
-        # atempo 的范围是 [0.5, 2.0]
-        audio_path = output_path
-        temp_path = output_path.with_stem(audio_path.stem + "_temp")
-
-        try:
-            cmd = [
-                "ffmpeg",
-                "-i",
-                str(audio_path),
-                "-filter:a",
-                f"atempo={speed_ratio}",
-                "-y",  # 覆盖输出文件
-                str(temp_path),
-            ]
-
-            CmdRunner.run(cmd)
-            logger.info(
-                f"ffmpeg successfully adjusted audio speed to {speed_ratio:.2f}x"
-            )
-
-            # 替换原文件
-            temp_path.replace(audio_path)
-            logger.info(f"Replaced original audio file: {audio_path}")
-
-            # 验证调整后的时长
-            new_duration_ms = self.get_audio_duration(audio_path) * 1000
-            error_ratio = abs(new_duration_ms - expect_duration_ms) / expect_duration_ms
-            logger.info(
-                f"Adjusted audio duration: {new_duration_ms:.3f}ms, "
-                f"error ratio: {error_ratio:.2%}"
-            )
-            return
-
-        except Exception as e:
-            # 清理临时文件
-            if temp_path.exists():
-                temp_path.unlink()
-            logger.error(f"Failed to adjust audio speed: {e}")
-            raise
 
 
-    def get_audio_duration(self, audio_path: Path) -> float:
-        """
-        获取音频文件的时长（秒）
-
-        使用 ffprobe 获取音频时长信息
-
-        :param audio_path: 音频文件路径
-        :return: 时长（秒）
-        :raises FileProcessingError: 如果 ffprobe 执行失败
-        """
-        try:
-            # 使用 -print_format json 获取结构化输出，更兼容不同版本的 ffprobe
-            cmd = [
-                "ffprobe",
-                "-v",
-                "error",
-                "-show_entries",
-                "format=duration",
-                "-print_format",
-                "json",
-                str(audio_path),
-            ]
-            output = CmdRunner.run(cmd)
-            result = json.loads(output)
-            duration = float(result["format"]["duration"])
-            logger.info(f"Audio duration: {duration:.3f}s for {audio_path}")
-            return duration
-        except (ValueError, IndexError, KeyError, json.JSONDecodeError) as e:
-            logger.error(f"Failed to parse duration: {e}")
-            raise FileProcessingError(f"Failed to parse audio duration: {e}")
 
 
 class VolcengineParams(BaseModel):
@@ -264,32 +195,3 @@ def get_volcengine_params(
 
     return VolcengineParams(speed_ratio=speed_ratio, loudness_ratio=loudness_ratio)
 
-
-# --- 测试用例 ---
-if __name__ == "__main__":
-    # 测试1: 纯中文 (24个字，基准4.8 -> 预计5秒)
-    text_zh = "这是一个用于测试中文语速计算的示例文本，看看效果如何。"
-    params_zh = get_volcengine_params(text_zh, target_duration_sec=2.5)
-    print(
-        f"纯中文 (目标2.5s): Speed={params_zh.speed_ratio}, Vol={params_zh.loudness_ratio}"
-    )
-    # 预期: 5.0 / 2.5 = 2.0 (被限制在2.0)
-
-    # 测试2: 纯英文 (13个单词，基准2.5 -> 预计5.2秒)
-    text_en = "This is a sample English text to test the word count logic for speed calculation."
-    params_en = get_volcengine_params(text_en, target_duration_sec=2.6)
-    print(
-        f"纯英文 (目标2.6s): Speed={params_en.speed_ratio}, Vol={params_en.loudness_ratio}"
-    )
-    # 预期: 5.2 / 2.6 = 2.0
-
-    # 测试3: 中英文混合
-    text_mix = "Hello 世界，今天天气不错。Python is great."
-    # 中文: 世界，今天天气不错 (9字) -> 9/4.8 ≈ 1.87s
-    # 英文: Hello, Python, is, great (4词) -> 4/2.5 = 1.6s
-    # 总计 ≈ 3.47s
-    params_mix = get_volcengine_params(text_mix, target_duration_sec=3.5)
-    print(
-        f"混合文本 (目标3.5s): Speed={params_mix.speed_ratio}, Vol={params_mix.loudness_ratio}"
-    )
-    # 预期: 3.47 / 3.5 ≈ 1.0

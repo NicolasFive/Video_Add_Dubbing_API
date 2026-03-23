@@ -10,8 +10,11 @@ from app.services.tts.volcengine.protocols_v2 import EventType, MsgType, full_cl
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
-
+WEBSOCKET_OPEN_TIMEOUT_SECONDS = 30
+WEBSOCKET_PING_INTERVAL_SECONDS = 20
+WEBSOCKET_PING_TIMEOUT_SECONDS = 90
+WEBSOCKET_CLOSE_TIMEOUT_SECONDS = 10
+WEBSOCKET_RECV_TIMEOUT_SECONDS = 180
 
 async def run_volcengine(
     appid: str,
@@ -38,7 +41,13 @@ async def run_volcengine(
 
     logger.info(f"Connecting to {endpoint} with headers: {headers}")
     websocket = await websockets.connect(
-        endpoint, additional_headers=headers, max_size=10 * 1024 * 1024
+        endpoint,
+        additional_headers=headers,
+        max_size=20 * 1024 * 1024,
+        open_timeout=WEBSOCKET_OPEN_TIMEOUT_SECONDS,
+        ping_interval=WEBSOCKET_PING_INTERVAL_SECONDS,
+        ping_timeout=WEBSOCKET_PING_TIMEOUT_SECONDS,
+        close_timeout=WEBSOCKET_CLOSE_TIMEOUT_SECONDS,
     )
     logger.info(
         f"Connected to WebSocket server, Logid: {websocket.response.headers['x-tt-logid']}",

@@ -7,9 +7,9 @@ import os
 class FFmpegBurner:
     def burn(
         self,
-        video_path: Path,
-        subtitle_path: Path,
-        output_path: Path,
+        video_path: str,
+        subtitle_path: str,
+        output_path: str,
         video_width=None,
         video_height=None,
         subtitle_font_size=None,
@@ -17,9 +17,9 @@ class FFmpegBurner:
         subtitle_font_size=54
         # ffmpeg -i input.mp4 -vf subtitles=sub.srt output.mp4
         # 注意：中文字幕需要指定字体，否则可能乱码
-        v_path = self._modify_separator(str(video_path))
-        s_path = self._modify_separator(str(subtitle_path))
-        o_path = self._modify_separator(str(output_path))
+        v_path = self._modify_separator(video_path)
+        s_path = self._modify_separator(subtitle_path)
+        o_path = self._modify_separator(output_path)
 
         safe_s_path = s_path.replace("'", r"\'")
 

@@ -151,3 +151,35 @@ class OptimizeSubtitlesStage(BasePipelineStage):
             log_name=f"optimized_subtitles",
             log_data=[asdict(item) for item in ctx.optimized_subtitles],
         )
+
+
+
+
+class OptimizeSubtitlesWithoutSpeedCheckStage(BasePipelineStage):
+    def run(self, ctx: ProcessingContext) -> None:
+        optimized_subtitles = []
+        prev_sub = None
+        for sub in ctx.subtitles:
+            # 克隆一份，避免修改原始字幕数据
+            sub = SubtitleLine(**asdict(sub))
+            if prev_sub:
+                gap = sub.start_ms - prev_sub.end_ms
+                prev_sub.end_ms+= min(gap, 500)
+            optimized_subtitles.append(sub)
+            prev_sub = sub
+        ctx.optimized_subtitles = optimized_subtitles
+        self._save_subtitles_log(ctx)
+
+    def get_data(self, ctx: ProcessingContext) -> list[dict]:
+        return [asdict(item) for item in ctx.optimized_subtitles]
+
+    def set_data(self, ctx: ProcessingContext, data: list[dict]) -> None:
+        ctx.optimized_subtitles = [SubtitleLine(**item) for item in data]
+        self._save_subtitles_log(ctx)
+
+    def _save_subtitles_log(self, ctx: ProcessingContext) -> None:
+        self._save_log(
+            ctx,
+            log_name=f"optimized_subtitles",
+            log_data=[asdict(item) for item in ctx.optimized_subtitles],
+        )

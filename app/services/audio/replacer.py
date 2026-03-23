@@ -3,14 +3,14 @@ from app.utils.cmd_runner import CmdRunner
 
 
 class FFmpegAudioReplacer:
-    def replace(self, video_path: Path, audio_path: Path, output_path: Path):
+    def replace(self, video_path: str, audio_path: str, output_path: str):
         cmd = [
             "ffmpeg",
             "-y",
             "-i",
-            str(video_path),
+            video_path,
             "-i",
-            str(audio_path),
+            audio_path,
             "-c:v",
             "copy",
             "-map",
@@ -18,9 +18,9 @@ class FFmpegAudioReplacer:
             "-map",
             "1:a:0",
             "-shortest",
-            str(output_path),
+            output_path,
         ]
         CmdRunner.run(cmd)
 
-        if not output_path.exists():
+        if not Path(output_path).exists():
             raise FileNotFoundError("Failed to generate output video with replaced audio")

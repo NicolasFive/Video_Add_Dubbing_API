@@ -12,7 +12,7 @@ class SubtitleGenerator:
     def generate_srt(
         self,
         subtitles: list[SubtitleLine],
-        output_path: Path,
+        output_path: str,
         video_width: int,
         font_size: int,
         max_lines_on_screen: int = 1,
@@ -68,8 +68,8 @@ class SubtitleGenerator:
         # 1. 计算单行最大容纳字符数
         # 逻辑：可用宽度 (90%) / (字号 * 0.9)。中文通常接近正方形，留 10% 余量给字间距和边距
         safe_width = video_width * 0.9
-        avg_char_width = font_size * 0.9
-        max_chars_per_line = int(safe_width / avg_char_width)
+        avg_char_width = font_size * 1.1
+        max_chars_per_line = int(safe_width / avg_char_width*1.5) # 乘以1.5的系数是经验校正值
 
         # 保底设置，防止字号过大导致计算值过小
         if max_chars_per_line < 8:

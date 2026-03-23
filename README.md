@@ -150,6 +150,7 @@ Content-Type：`multipart/form-data`
 | `video` | form-data | file | 条件必填 | 上传源视频文件。 |
 | `audio` | form-data | file | 条件必填 | 上传源音频文件（纯音频配音流程）。 |
 | `voice_types` | form-data | array[string] | 是 | 多说话人音色列表。可通过重复字段提交多个值（例如 `-F "voice_types=a" -F "voice_types=b"`）。 |
+| `line_type` | form-data | string | 否 | 配置类型，用于选择不同的处理流程配置（如 `default` 或 `doubao_v1`）。不传则使用默认值 `default`。 |
 | `task_id` | form-data | string | 否 | 任务 ID；不传则自动生成。可用于断点续跑/重试。 |
 | `start_step` | form-data | string | 否 | 从指定流程步骤开始（需填写精确步骤名）。 |
 | `end_step` | form-data | string | 否 | 在指定流程步骤结束。 |
@@ -312,24 +313,30 @@ curl -L "http://127.0.0.1:8000/v1/result/<task_id>/download?file=subtitles.srt" 
 
 ### 5.5 `GET /v1/pipline/config`
 
-用途：获取当前系统内置的 pipeline 阶段配置列表。
+用途：获取指定 `line_type` 对应的 pipeline 阶段配置列表。
 
-#### 请求参数
+#### 查询参数
 
-无。
+| 名称 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `line_type` | string | 否 | 配置类型（如 `default` 或 `doubao_v1`）。不传则使用默认值 `default`。可通过 `/v1/pipeline/line-types` 获取所有可用类型。 |
 
 #### 成功响应（`200`）
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| `stages` | array | 流程阶段列表。 |
+| `stages` | array | 对应 line_type 的流程阶段列表。 |
 | `stages[].key` | string | 阶段唯一标识。 |
 | `stages[].name` | string | 阶段显示名称。 |
 
 请求示例：
 
 ```bash
+# 获取默认配置
 curl "http://127.0.0.1:8000/v1/pipline/config"
+
+# 获取指定配置类型
+curl "http://127.0.0.1:8000/v1/pipline/config?line_type=doubao_v1"
 ```
 
 响应示例：
@@ -353,7 +360,35 @@ curl "http://127.0.0.1:8000/v1/pipline/config"
 }
 ```
 
-### 5.6 `GET /v1/optimize/{task_id}`
+### 5.6 `GET /v1/pipeline/line-types`
+
+用途：查询所有可用的配置类型（line_type）。
+
+#### 查询参数
+
+无。
+
+#### 成功响应（`200`）
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `line_types` | array[string] | 所有可用的配置类型列表。 |
+
+请求示例：
+
+```bash
+curl "http://127.0.0.1:8000/v1/pipeline/line-types"
+```
+
+响应示例：
+
+```json
+{
+  "line_types": ["default", "doubao_v1"]
+}
+```
+
+### 5.7 `GET /v1/optimize/{task_id}`
 
 用途：读取指定任务某个流程阶段的数据（从 `context.pkl` 加载上下文后调用对应 stage 的 `get_data`），并以 JSON 字符串返回。
 
@@ -393,7 +428,7 @@ curl "http://127.0.0.1:8000/v1/optimize/<task_id>?stage=Translating"
 }
 ```
 
-### 5.7 `POST /v1/optimize/{task_id}`
+### 5.8 `POST /v1/optimize/{task_id}`
 
 用途：解析上传的 JSON 字符串，修改指定任务某个流程阶段的数据（从 `context.pkl` 读取上下文并调用对应 stage 的 `set_data`），修改后保存回 `context.pkl`。
 
@@ -438,7 +473,7 @@ curl -X POST "http://127.0.0.1:8000/v1/optimize/<task_id>" \
 - 若阶段未实现 `get_data` / `set_data`，接口会返回 `400`。
 - 当前建议优先用于翻译阶段数据（`Translating`）。
 
-### 5.8 `GET /v1/health`
+### 5.9 `GET /v1/health`
 
 用途：API 与依赖组件健康检查。
 
