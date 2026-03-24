@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   redis:
     image: redis:8.0
@@ -26,8 +24,8 @@ services:
       - ./pyproject.toml:/app/pyproject.toml
       - ./.env.prod:/app/.env
     restart: unless-stopped
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [gpu]
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - capabilities: [gpu]

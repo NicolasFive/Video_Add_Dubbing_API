@@ -19,7 +19,7 @@ class VolcengineSynthesizeVoiceStage(BasePipelineStage):
         speaker_voice_map = {}
 
         for i, sub in enumerate(ctx.optimized_subtitles):
-            tts_path = Path(ctx.work_dir) / f"tts_{i}.wav"
+            tts_path = Path(ctx.work_dir)/ "tts" / f"tts_{i}.wav"
             
             emotion = (
                 "angry"
@@ -80,7 +80,7 @@ class VolcengineV2SynthesizeVoiceStage(BasePipelineStage):
         # 2. 再合成语音，传入情绪文本作为上下文提示
         speaker_voice_map = {}
         for i, sub in enumerate(ctx.optimized_subtitles):
-            tts_path = Path(ctx.work_dir) / f"tts_{i}.wav"
+            tts_path = Path(ctx.work_dir)/ "tts" / f"tts_{i}.wav"
 
             if self._check_speech_text_is_blank(sub.translated_text):
                 sub.translated_tts_path = None
@@ -115,3 +115,4 @@ class VolcengineV2SynthesizeVoiceStage(BasePipelineStage):
         # 判断文本是否只包含不可读文本（如标点）
         readable_content = re.sub(r"[^\w\s]", "", text)
         return len(readable_content.strip()) == 0
+    
