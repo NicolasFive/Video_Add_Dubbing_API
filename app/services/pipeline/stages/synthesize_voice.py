@@ -17,9 +17,11 @@ class VolcengineSynthesizeVoiceStage(BasePipelineStage):
 
     def run(self, ctx: ProcessingContext) -> None:
         speaker_voice_map = {}
+        tts_dir = Path(ctx.work_dir) / "tts"
+        tts_dir.mkdir(exist_ok=True)
 
         for i, sub in enumerate(ctx.optimized_subtitles):
-            tts_path = Path(ctx.work_dir)/ "tts" / f"tts_{i}.wav"
+            tts_path = tts_dir / f"tts_{i}.wav"
             
             emotion = (
                 "angry"
@@ -79,8 +81,11 @@ class VolcengineV2SynthesizeVoiceStage(BasePipelineStage):
         )
         # 2. 再合成语音，传入情绪文本作为上下文提示
         speaker_voice_map = {}
+        tts_dir = Path(ctx.work_dir) / "tts"
+        tts_dir.mkdir(exist_ok=True)
+        
         for i, sub in enumerate(ctx.optimized_subtitles):
-            tts_path = Path(ctx.work_dir)/ "tts" / f"tts_{i}.wav"
+            tts_path = tts_dir / f"tts_{i}.wav"
 
             if self._check_speech_text_is_blank(sub.translated_text):
                 sub.translated_tts_path = None
