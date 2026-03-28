@@ -149,11 +149,12 @@ Content-Type：`multipart/form-data`
 | --- | --- | --- | --- | --- |
 | `video` | form-data | file | 条件必填 | 上传源视频文件。 |
 | `audio` | form-data | file | 条件必填 | 上传源音频文件（纯音频配音流程）。 |
-| `voice_types` | form-data | array[string] | 是 | 多说话人音色列表。可通过重复字段提交多个值（例如 `-F "voice_types=a" -F "voice_types=b"`）。 |
-| `line_type` | form-data | string | 否 | 配置类型，用于选择不同的处理流程配置（如 `default` 或 `doubao_v1`）。不传则使用默认值 `default`。 |
+| `voice_types` | form-data | array[string] | 否 | 多说话人音色列表。可通过重复字段提交多个值（例如 `-F "voice_types=a" -F "voice_types=b"`）。 |
+| `line_type` | form-data | string | 否 | 配置类型；不传时默认 `default`。 |
 | `task_id` | form-data | string | 否 | 任务 ID；不传则自动生成。可用于断点续跑/重试。 |
 | `start_step` | form-data | string | 否 | 从指定流程步骤开始（需填写精确步骤名）。 |
 | `end_step` | form-data | string | 否 | 在指定流程步骤结束。 |
+| `duck_db` | form-data | integer | 否 | 背景音乐 ducking 音量参数。 |
 
 校验规则：
 
@@ -178,17 +179,6 @@ curl -X POST "http://127.0.0.1:8000/v1/dubbing" \
   -F "voice_types=zh_male_wennuanahu_moon_bigtts"
 ```
 
-响应示例：
-
-```json
-{
-  "task_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-  "status": "pending",
-  "message": "Task submitted successfully",
-  "created_at": "2026-03-06T10:00:00.000000"
-}
-```
-
 ### 5.2 `GET /v1/status/{task_id}`
 
 用途：查询任务状态与进度。
@@ -205,30 +195,16 @@ curl -X POST "http://127.0.0.1:8000/v1/dubbing" \
 | --- | --- | --- |
 | `task_id` | string | 任务 ID。 |
 | `status` | string | `pending` / `processing` / `success` / `failed` / `unknown`。 |
-| `video_url` | string/null | 输出视频 URL/路径（当前实现中可能为空）。 |
-| `subtitle_url` | string/null | 输出字幕 URL/路径（当前实现中可能为空）。 |
+| `video_url` | string/null | 输出视频 URL/路径（当前实现通常为空）。 |
+| `subtitle_url` | string/null | 输出字幕 URL/路径（当前实现通常为空）。 |
 | `error_detail` | string/null | 错误详情（失败时可能返回）。 |
 | `progress` | integer | 进度百分比，范围 `0-100`。 |
-| `current_step` | string/null | 当前流程步骤名（状态详情缺失时默认为 `Unknown`）。 |
+| `current_step` | string/null | 当前流程步骤名（缺失时为 `Unknown`）。 |
 
 请求示例：
 
 ```bash
 curl "http://127.0.0.1:8000/v1/status/<task_id>"
-```
-
-响应示例：
-
-```json
-{
-  "task_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-  "status": "processing",
-  "video_url": null,
-  "subtitle_url": null,
-  "error_detail": null,
-  "progress": 40,
-  "current_step": "Translating"
-}
 ```
 
 ### 5.3 `GET /v1/result/{task_id}`
@@ -257,38 +233,12 @@ curl "http://127.0.0.1:8000/v1/status/<task_id>"
 | `current_step` | string/null | 当前流程步骤。 |
 | `error_detail` | string/null | 失败时的错误详情。 |
 
+说明：当前实现返回的 `files[].download_url` 形如 `/v1/result/task_id/{task_id}/download?file=...`，客户端建议直接使用返回值。
+
 请求示例：
 
 ```bash
 curl "http://127.0.0.1:8000/v1/result/<task_id>"
-```
-
-响应示例：
-
-```json
-{
-  "task_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-  "status": "success",
-  "files": [
-    {
-      "file_name": "final_video_path.mp4",
-      "relative_path": "final_video_path.mp4",
-      "size_bytes": 27834567,
-      "updated_at": "2026-03-13T11:32:10",
-      "download_url": "/v1/result/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/download?file=final_video_path.mp4"
-    },
-    {
-      "file_name": "subtitles.srt",
-      "relative_path": "subtitles.srt",
-      "size_bytes": 9210,
-      "updated_at": "2026-03-13T11:31:20",
-      "download_url": "/v1/result/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/download?file=subtitles.srt"
-    }
-  ],
-  "progress": 100,
-  "current_step": "Completed",
-  "error_detail": null
-}
 ```
 
 ### 5.4 `GET /v1/result/{task_id}/download`
@@ -319,7 +269,7 @@ curl -L "http://127.0.0.1:8000/v1/result/<task_id>/download?file=subtitles.srt" 
 
 | 名称 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
-| `line_type` | string | 否 | 配置类型（如 `default` 或 `doubao_v1`）。不传则使用默认值 `default`。可通过 `/v1/pipeline/line-types` 获取所有可用类型。 |
+| `line_type` | string | 否 | 配置类型（如 `default` 或 `doubao_v1`）。不传则使用默认值 `default`。 |
 
 #### 成功响应（`200`）
 
@@ -339,34 +289,9 @@ curl "http://127.0.0.1:8000/v1/pipline/config"
 curl "http://127.0.0.1:8000/v1/pipline/config?line_type=doubao_v1"
 ```
 
-响应示例：
-
-```json
-{
-  "stages": [
-    {
-      "key": "Analyzing Video",
-      "name": "分析视频"
-    },
-    {
-      "key": "Translating",
-      "name": "翻译"
-    },
-    {
-      "key": "Optimizing Subtitles",
-      "name": "优化字幕"
-    }
-  ]
-}
-```
-
-### 5.6 `GET /v1/pipeline/line-types`
+### 5.6 `GET /v1/pipline/line-types`
 
 用途：查询所有可用的配置类型（line_type）。
-
-#### 查询参数
-
-无。
 
 #### 成功响应（`200`）
 
@@ -377,20 +302,12 @@ curl "http://127.0.0.1:8000/v1/pipline/config?line_type=doubao_v1"
 请求示例：
 
 ```bash
-curl "http://127.0.0.1:8000/v1/pipeline/line-types"
-```
-
-响应示例：
-
-```json
-{
-  "line_types": ["default", "doubao_v1"]
-}
+curl "http://127.0.0.1:8000/v1/pipline/line-types"
 ```
 
 ### 5.7 `GET /v1/optimize/{task_id}`
 
-用途：读取指定任务某个流程阶段的数据（从 `context.pkl` 加载上下文后调用对应 stage 的 `get_data`），并以 JSON 字符串返回。
+用途：读取指定任务某个流程阶段的数据（从 `context.pkl` 加载上下文后调用对应 stage 的 `get_data`）。
 
 #### 路径参数
 
@@ -402,7 +319,7 @@ curl "http://127.0.0.1:8000/v1/pipeline/line-types"
 
 | 名称 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
-| `stage` | string | 是 | 流程阶段名或 key（例如 `Translating` 或 `translate`）。 |
+| `stage` | string | 是 | 流程阶段名或 key（例如 `Translating` / `translate`）。 |
 
 #### 成功响应（`200`）
 
@@ -410,27 +327,11 @@ curl "http://127.0.0.1:8000/v1/pipeline/line-types"
 | --- | --- | --- |
 | `task_id` | string | 任务 ID。 |
 | `stage` | string | 标准化后的阶段名。 |
-| `data` | string | 阶段数据的 JSON 字符串。 |
-
-请求示例：
-
-```bash
-curl "http://127.0.0.1:8000/v1/optimize/<task_id>?stage=Translating"
-```
-
-响应示例：
-
-```json
-{
-  "task_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-  "stage": "Translating",
-  "data": "[{\"original_text\":\"Hello\",\"translated_text\":\"你好\"}]"
-}
-```
+| `data` | string | 阶段数据（若为结构化数据，会序列化为 JSON 字符串）。 |
 
 ### 5.8 `POST /v1/optimize/{task_id}`
 
-用途：解析上传的 JSON 字符串，修改指定任务某个流程阶段的数据（从 `context.pkl` 读取上下文并调用对应 stage 的 `set_data`），修改后保存回 `context.pkl`。
+用途：修改指定任务某个流程阶段的数据（调用 stage 的 `set_data` 并回写 `context.pkl`）。
 
 Content-Type：`multipart/form-data`
 
@@ -439,7 +340,7 @@ Content-Type：`multipart/form-data`
 | 名称 | 位置 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- | --- |
 | `stage` | form-data | string | 是 | 流程阶段名或 key（例如 `Translating` / `translate`）。 |
-| `data` | form-data | string | 是 | 阶段数据 JSON 字符串。 |
+| `data` | form-data | string | 是 | 阶段数据；优先按 JSON 解析，失败则按普通字符串处理。 |
 
 #### 成功响应（`200`）
 
@@ -449,12 +350,39 @@ Content-Type：`multipart/form-data`
 | `stage` | string | 标准化后的阶段名。 |
 | `message` | string | 更新结果消息。 |
 
+### 5.9 `GET /v1/optimize/self_check/{task_id}`
+
+用途：执行指定 stage 的 `self_check` 逻辑。
+
+#### 路径参数
+
+| 名称 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `task_id` | string | 是 | 任务 ID。 |
+
+#### 查询参数
+
+| 名称 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `stage` | string | 是 | 流程阶段名或 key。 |
+
+#### 成功响应（`200`）
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `task_id` | string | 任务 ID。 |
+| `stage` | string | 标准化后的阶段名。 |
+| `data` | array[SelfCheckItem] | 自检结果列表。 |
+| `data[].index` | integer | 检查项序号。 |
+| `data[].check_point` | string | 检查点名称。 |
+| `data[].issue` | string/null | 发现的问题说明。 |
+| `data[].warning_content` | string/null | 需要关注的内容。 |
+| `data[].confirm_content` | string/null | 建议确认或修正后的内容。 |
+
 请求示例：
 
 ```bash
-curl -X POST "http://127.0.0.1:8000/v1/optimize/<task_id>" \
-  -F "stage=Translating" \
-  -F "data=[{\"original_text\":\"Hello\",\"translated_text\":\"你好，世界\"}]"
+curl "http://127.0.0.1:8000/v1/optimize/self_check/<task_id>?stage=Translating"
 ```
 
 响应示例：
@@ -463,23 +391,73 @@ curl -X POST "http://127.0.0.1:8000/v1/optimize/<task_id>" \
 {
   "task_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
   "stage": "Translating",
-  "message": "stage data updated"
+  "data": [
+    {
+      "index": 0,
+      "check_point": "terminology",
+      "issue": "Brand name translation is inconsistent",
+      "warning_content": "OpenAI was translated differently across lines",
+      "confirm_content": "Use the same translated term for all occurrences"
+    }
+  ]
 }
 ```
 
-说明：
+### 5.10 `POST /v1/optimize/check_confirm/{task_id}`
 
-- 调用 optimize 接口前，任务目录下必须存在 `context.pkl`。
-- 若阶段未实现 `get_data` / `set_data`，接口会返回 `400`。
-- 当前建议优先用于翻译阶段数据（`Translating`）。
+用途：提交确认数据并执行指定 stage 的 `check_confirm` 逻辑。
 
-### 5.9 `GET /v1/health`
-
-用途：API 与依赖组件健康检查。
+Content-Type：`multipart/form-data`
 
 #### 请求参数
 
-无。
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| `stage` | form-data | string | 是 | 流程阶段名或 key。 |
+| `data` | form-data | string(JSON) | 是 | 必须为 JSON 数组，每个元素都会解析为 `SelfCheckItem`。 |
+
+`data` 中每个 `SelfCheckItem` 支持以下字段：
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `index` | integer | 是 | 检查项序号。 |
+| `check_point` | string | 是 | 检查点名称。 |
+| `issue` | string/null | 否 | 问题描述。 |
+| `warning_content` | string/null | 否 | 需要关注的内容。 |
+| `confirm_content` | string/null | 否 | 用户确认后的内容。 |
+
+#### 成功响应（`200`）
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `task_id` | string | 任务 ID。 |
+| `stage` | string | 标准化后的阶段名。 |
+
+请求示例：
+
+```bash
+curl -X POST "http://127.0.0.1:8000/v1/optimize/check_confirm/<task_id>" \
+  -F "stage=Translating" \
+  -F 'data=[{"index":0,"check_point":"terminology","issue":"Brand name translation is inconsistent","warning_content":"OpenAI was translated differently across lines","confirm_content":"统一改为同一个译名"}]'
+```
+
+响应示例：
+
+```json
+{
+  "task_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "stage": "Translating"
+}
+```
+
+错误说明：
+
+- `data` 不是合法 JSON 时，接口返回 `400`。
+- `data` 中元素无法映射为 `SelfCheckItem` 时，接口会返回校验错误。
+
+### 5.11 `GET /v1/health`
+
+用途：API 与依赖组件健康检查。
 
 #### 成功响应（`200`）
 

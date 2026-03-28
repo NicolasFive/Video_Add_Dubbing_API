@@ -3,7 +3,8 @@ import pickle
 
 from fastapi import APIRouter, HTTPException, Form
 
-from app.models.schemas import OptimizeDataResult, OptimizeUpdateResult
+from app.models.domain import SelfCheckItem
+from app.models.schemas import OptimizeDataResult, OptimizeUpdateResult, SelfCheckDataResult, CheckConfirmDataResult
 from app.services.pipeline import build_stage_configs, build_stage_registry
 from app.utils.file_manager import FileManager
 
@@ -72,12 +73,12 @@ async def get_current_config(task_id: str, stage: str):
     return OptimizeDataResult(task_id=task_id, stage=stage_key, data=data)
 
 
-@router.post("/{task_id}")
+@router.post("/{task_id}", response_model=OptimizeUpdateResult)
 async def update_current_config(
     task_id: str,
     stage: str = Form(...),
     data: str = Form(...),
-) -> OptimizeUpdateResult:
+):
     ctx, context_file = _load_context(task_id)
     stage_key, stage_impl = _resolve_stage(stage)
 
@@ -92,6 +93,63 @@ async def update_current_config(
         parsed_data = data  # 如果不是 JSON 格式，则直接使用原始字符串
     try:
         stage_impl.set_data(ctx, parsed_data)
+        with open(context_file, "wb") as f:
+            pickle.dump(ctx, f)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500, detail=f"failed to update stage data: {exc}"
+        ) from exc
+
+    return OptimizeUpdateResult(
+        task_id=task_id,
+        stage=stage_key,
+        message="stage data updated",
+    )
+
+@router.get("/self_check/{task_id}", response_model=SelfCheckDataResult)
+async def self_check(task_id: str, stage: str):
+    ctx, _ = _load_context(task_id)
+    stage_key, stage_impl = _resolve_stage(stage)
+
+    if not hasattr(stage_impl, "self_check"):
+        raise HTTPException(
+            status_code=400, detail=f"stage does not support self_check: {stage_key}"
+        )
+
+    try:
+        data = stage_impl.self_check(ctx)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500, detail=f"failed to read stage data: {exc}"
+        ) from exc
+
+    return SelfCheckDataResult(task_id=task_id, stage=stage_key, data=data)
+
+
+
+@router.post("/check_confirm/{task_id}", response_model=CheckConfirmDataResult)
+async def check_confirm(
+    task_id: str,
+    stage: str = Form(...),
+    data: str = Form(...),
+):
+    ctx, context_file = _load_context(task_id)
+    stage_key, stage_impl = _resolve_stage(stage)
+
+    if not hasattr(stage_impl, "check_confirm"):
+        raise HTTPException(
+            status_code=400, detail=f"stage does not support check_confirm: {stage_key}"
+        )
+
+    try:
+        parsed_data = json.loads(data)
+        parsed_data = [SelfCheckItem(**item) for item in parsed_data]
+    except json.JSONDecodeError as exc:
+        raise HTTPException(
+            status_code=400, detail=f"invalid JSON format for check_confirm data: {exc}"
+        )
+    try:
+        stage_impl.check_confirm(ctx, parsed_data)
         with open(context_file, "wb") as f:
             pickle.dump(ctx, f)
     except Exception as exc:

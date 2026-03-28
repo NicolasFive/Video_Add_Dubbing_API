@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import json
 
-from app.models.domain import ProcessingContext
+from app.models.domain import ProcessingContext, SelfCheckItem
 from pathlib import Path
 
 
@@ -23,6 +23,14 @@ class BasePipelineStage(ABC):
     def set_data(self, ctx: ProcessingContext, data: list[dict] | dict | str) -> None:
         raise NotImplementedError
 
+    @abstractmethod
+    def self_check(self, ctx: ProcessingContext) -> list[SelfCheckItem]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def check_confirm(self, ctx: ProcessingContext, data: list[SelfCheckItem]) -> None:
+        raise NotImplementedError
+    
     @staticmethod
     def _save_log(ctx: ProcessingContext, log_name: str = "", log_data=None) -> None:
         if log_data is None:

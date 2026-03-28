@@ -55,6 +55,7 @@ class ProcessingContext:
     work_dir: str
     voice_types: list[str] = field(default_factory=list)
     line_type: str = "default"  # 用于选择不同的 STAGE_CONFIGS
+    duck_db: Optional[int]=-10  # 叠加时主音频的降音量，单位为 dB
 
     # 当前执行的步骤，用于断点续传
     current_step: Optional[str] = None
@@ -82,4 +83,13 @@ class ReducerData:
     text: str
     target_length: int
     reduced_text: Optional[str] = None
+
+
+@dataclass
+class SelfCheckItem:
+    index: int
+    check_point: str
+    issue: str = None
+    warning_content: Optional[str] = None
+    confirm_content: Optional[str] = None
 

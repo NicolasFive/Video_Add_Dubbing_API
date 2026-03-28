@@ -33,6 +33,12 @@ class FFmpegReplaceAudioStage(BasePipelineStage):
 
     def set_data(self, ctx, data):
         pass
+    
+    def self_check(self, ctx):
+        pass
+
+    def check_confirm(self, ctx, data):
+        pass
 
 
 class FFmpegOriginalSwapStage(BasePipelineStage):
@@ -55,4 +61,10 @@ class FFmpegOriginalSwapStage(BasePipelineStage):
         pass
 
     def set_data(self, ctx, data):
+        pass
+    
+    def self_check(self, ctx):
+        pass
+
+    def check_confirm(self, ctx, data):
         pass

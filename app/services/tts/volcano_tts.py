@@ -1,11 +1,6 @@
 from pathlib import Path
 from app.core.config import settings
-from app.core.exceptions import FileProcessingError
-from app.models.domain import SubtitleLine
-from app.services.translation.llm_reducer import LLMReducer
-from app.utils.cmd_runner import CmdRunner
 import asyncio
-import json
 import logging
 from app.services.tts.volcengine.binary import run_volcengine
 import math
@@ -187,11 +182,11 @@ def get_volcengine_params(
     # 限制速度范围 (0.1x ~ 2.0x)
     speed_ratio = round(max(0.1, min(2.0, speed_ratio)), 1)
 
-    # --- 5. 动态调整音量 ---
+    # --- 5. 动态调整音量(停用，会导致音量忽高忽低) ---
     loudness_ratio = 1.0
-    loudness_offset = (speed_ratio - 1.0) * 0.5
-    loudness_ratio += round(loudness_offset, 1)
-    loudness_ratio = max(0.5, min(2.0, loudness_ratio))
+    # loudness_offset = (speed_ratio - 1.0) * 0.5
+    # loudness_ratio += round(loudness_offset, 1)
+    # loudness_ratio = max(0.5, min(2.0, loudness_ratio))
 
     return VolcengineParams(speed_ratio=speed_ratio, loudness_ratio=loudness_ratio)
 

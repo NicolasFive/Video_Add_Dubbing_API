@@ -145,10 +145,12 @@ Content-Type: `multipart/form-data`
 | --- | --- | --- | --- | --- |
 | `video` | form-data | file | conditional | Uploaded source video file. |
 | `audio` | form-data | file | conditional | Uploaded source audio file (audio-only dubbing flow). |
-| `voice_type` | form-data | string | No | TTS speaker/voice type. |
+| `voice_types` | form-data | array[string] | No | Multi-speaker voice types. Submit multiple values by repeating fields (for example `-F "voice_types=a" -F "voice_types=b"`). |
+| `line_type` | form-data | string | No | Pipeline config type. Defaults to `default` when omitted. |
 | `task_id` | form-data | string | No | Task ID. Auto-generated if omitted. Can be reused for resume/retry workflows. |
 | `start_step` | form-data | string | No | Start from a specific pipeline step (exact step name required). |
 | `end_step` | form-data | string | No | Stop after a specific pipeline step. |
+| `duck_db` | form-data | integer | No | Background music ducking volume parameter. |
 
 Validation rules:
 
@@ -169,21 +171,11 @@ Example request:
 ```bash
 curl -X POST "http://127.0.0.1:8000/v1/dubbing" \
   -F "video=@./sample.mp4" \
-  -F "voice_type=zh_female_meilinvyou" \
+  -F "voice_types=zh_female_xiaohe_uranus_bigtts" \
+  -F "voice_types=zh_male_wennuanahu_moon_bigtts"
 ```
 
-Example response:
-
-```json
-{
-  "task_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-  "status": "pending",
-  "message": "Task submitted successfully",
-  "created_at": "2026-03-06T10:00:00.000000"
-}
-```
-
-### 5.2 `GET /v1/status/task_id/{task_id}`
+### 5.2 `GET /v1/status/{task_id}`
 
 Purpose: Query task status and progress.
 
@@ -208,7 +200,7 @@ Purpose: Query task status and progress.
 Example request:
 
 ```bash
-curl "http://127.0.0.1:8000/v1/status/task_id/<task_id>"
+curl "http://127.0.0.1:8000/v1/status/<task_id>"
 ```
 
 Example response:
@@ -225,7 +217,7 @@ Example response:
 }
 ```
 
-### 5.3 `GET /v1/result/task_id/{task_id}`
+### 5.3 `GET /v1/result/{task_id}`
 
 Purpose: List task-generated files and provide downloadable links.
 
@@ -251,10 +243,12 @@ Purpose: List task-generated files and provide downloadable links.
 | `current_step` | string/null | Current pipeline step. |
 | `error_detail` | string/null | Error details when failed. |
 
+Note: current implementation returns `files[].download_url` in the form `/v1/result/task_id/{task_id}/download?file=...`; clients should prefer using the returned URL directly.
+
 Example request:
 
 ```bash
-curl "http://127.0.0.1:8000/v1/result/task_id/<task_id>"
+curl "http://127.0.0.1:8000/v1/result/<task_id>"
 ```
 
 Example response:
@@ -285,7 +279,7 @@ Example response:
 }
 ```
 
-### 5.4 `GET /v1/result/task_id/{task_id}/download`
+### 5.4 `GET /v1/result/{task_id}/download`
 
 Purpose: Download a generated file by task-relative path.
 
@@ -302,10 +296,201 @@ Purpose: Download a generated file by task-relative path.
 Example request:
 
 ```bash
-curl -L "http://127.0.0.1:8000/v1/result/task_id/<task_id>/download?file=subtitles.srt" -o subtitles.srt
+curl -L "http://127.0.0.1:8000/v1/result/<task_id>/download?file=subtitles.srt" -o subtitles.srt
 ```
 
-### 5.5 `GET /v1/health`
+### 5.5 `GET /v1/pipline/config`
+
+Purpose: Get stage config list for the specified `line_type`.
+
+#### Query Parameters
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| `line_type` | string | No | Config type (for example `default` or `doubao_v1`). Uses `default` when omitted. |
+
+#### Success Response (`200`)
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `stages` | array | Stage list under the selected line_type. |
+| `stages[].key` | string | Stage unique key. |
+| `stages[].name` | string | Stage display name. |
+
+Example request:
+
+```bash
+curl "http://127.0.0.1:8000/v1/pipline/config"
+curl "http://127.0.0.1:8000/v1/pipline/config?line_type=doubao_v1"
+```
+
+### 5.6 `GET /v1/pipline/line-types`
+
+Purpose: List all available line types.
+
+#### Success Response (`200`)
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `line_types` | array[string] | All available line types. |
+
+Example request:
+
+```bash
+curl "http://127.0.0.1:8000/v1/pipline/line-types"
+```
+
+### 5.7 `GET /v1/optimize/{task_id}`
+
+Purpose: Read stage data for a task (loads `context.pkl` and calls stage `get_data`).
+
+#### Path Parameters
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| `task_id` | string | Yes | Task ID. |
+
+#### Query Parameters
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| `stage` | string | Yes | Stage key/name (for example `Translating` / `translate`). |
+
+#### Success Response (`200`)
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `task_id` | string | Task ID. |
+| `stage` | string | Normalized stage key. |
+| `data` | string | Stage data (JSON string when data is structured). |
+
+### 5.8 `POST /v1/optimize/{task_id}`
+
+Purpose: Update stage data for a task (calls stage `set_data` and writes back `context.pkl`).
+
+Content-Type: `multipart/form-data`
+
+#### Request Parameters
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `stage` | form-data | string | Yes | Stage key/name (for example `Translating` / `translate`). |
+| `data` | form-data | string | Yes | Stage payload. Parsed as JSON first; raw string is used if JSON parse fails. |
+
+#### Success Response (`200`)
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `task_id` | string | Task ID. |
+| `stage` | string | Normalized stage key. |
+| `message` | string | Update result message. |
+
+### 5.9 `GET /v1/optimize/self_check/{task_id}`
+
+Purpose: Run stage-level `self_check` logic.
+
+#### Path Parameters
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| `task_id` | string | Yes | Task ID. |
+
+#### Query Parameters
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| `stage` | string | Yes | Stage key/name. |
+
+#### Success Response (`200`)
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `task_id` | string | Task ID. |
+| `stage` | string | Normalized stage key. |
+| `data` | array[SelfCheckItem] | Self-check result list. |
+| `data[].index` | integer | Check item index. |
+| `data[].check_point` | string | Check point name. |
+| `data[].issue` | string/null | Detected issue description. |
+| `data[].warning_content` | string/null | Content that needs attention. |
+| `data[].confirm_content` | string/null | Suggested confirmed or corrected content. |
+
+Example request:
+
+```bash
+curl "http://127.0.0.1:8000/v1/optimize/self_check/<task_id>?stage=Translating"
+```
+
+Example response:
+
+```json
+{
+  "task_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "stage": "Translating",
+  "data": [
+    {
+      "index": 0,
+      "check_point": "terminology",
+      "issue": "Brand name translation is inconsistent",
+      "warning_content": "OpenAI was translated differently across lines",
+      "confirm_content": "Use the same translated term for all occurrences"
+    }
+  ]
+}
+```
+
+### 5.10 `POST /v1/optimize/check_confirm/{task_id}`
+
+Purpose: Submit confirmation payload and run stage-level `check_confirm` logic.
+
+Content-Type: `multipart/form-data`
+
+#### Request Parameters
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `stage` | form-data | string | Yes | Stage key/name. |
+| `data` | form-data | string(JSON) | Yes | Must be a JSON array. Each element is parsed into a `SelfCheckItem`. |
+
+Each `SelfCheckItem` in `data` supports these fields:
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `index` | integer | Yes | Check item index. |
+| `check_point` | string | Yes | Check point name. |
+| `issue` | string/null | No | Issue description. |
+| `warning_content` | string/null | No | Content needing attention. |
+| `confirm_content` | string/null | No | User-confirmed content. |
+
+#### Success Response (`200`)
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `task_id` | string | Task ID. |
+| `stage` | string | Normalized stage key. |
+
+Example request:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/v1/optimize/check_confirm/<task_id>" \
+  -F "stage=Translating" \
+  -F 'data=[{"index":0,"check_point":"terminology","issue":"Brand name translation is inconsistent","warning_content":"OpenAI was translated differently across lines","confirm_content":"Use one consistent translation"}]'
+```
+
+Example response:
+
+```json
+{
+  "task_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "stage": "Translating"
+}
+```
+
+Error notes:
+
+- The endpoint returns `400` when `data` is not valid JSON.
+- If any item in `data` cannot be parsed into `SelfCheckItem`, validation fails.
+
+### 5.11 `GET /v1/health`
 
 Purpose: Health check for API and dependency components.
 

@@ -21,6 +21,12 @@ class AssemblyAITranscribeStage(BasePipelineStage):
 
     def set_data(self, ctx, data):
         pass
+    
+    def self_check(self, ctx):
+        pass
+
+    def check_confirm(self, ctx, data):
+        pass
 
     @staticmethod
     def _parse_transcript(raw_data: dict) -> list[TranscriptLine]:

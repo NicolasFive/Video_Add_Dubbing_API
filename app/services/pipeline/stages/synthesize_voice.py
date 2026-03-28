@@ -22,7 +22,7 @@ class VolcengineSynthesizeVoiceStage(BasePipelineStage):
 
         for i, sub in enumerate(ctx.optimized_subtitles):
             tts_path = tts_dir / f"tts_{i}.wav"
-            
+
             emotion = (
                 "angry"
                 if sub.sentiment == Sentiment.NEGATIVE
@@ -55,6 +55,12 @@ class VolcengineSynthesizeVoiceStage(BasePipelineStage):
 
     def set_data(self, ctx, data):
         pass
+    
+    def self_check(self, ctx):
+        pass
+
+    def check_confirm(self, ctx, data):
+        pass
 
     @staticmethod
     def _check_speech_text_is_blank(text: str) -> bool:
@@ -70,20 +76,19 @@ class VolcengineV2SynthesizeVoiceStage(BasePipelineStage):
 
     def run(self, ctx: ProcessingContext) -> None:
         # 1. 先分析情绪，得到每条字幕的情绪文本
-        context_texts = self.emotionor.exec([sub.translated_text for sub in ctx.optimized_subtitles])
+        emotion_context = self.emotionor.exec(
+            "\n".join([sub.translated_text for sub in ctx.optimized_subtitles])
+        )
         self._save_log(
             ctx,
             log_name="emotion_analysis",
-            log_data=[
-                {"text": sub.translated_text, "context_text": context_texts[i]}
-                for i, sub in enumerate(ctx.optimized_subtitles)
-            ],
+            log_data=emotion_context.model_dump(),
         )
         # 2. 再合成语音，传入情绪文本作为上下文提示
         speaker_voice_map = {}
         tts_dir = Path(ctx.work_dir) / "tts"
         tts_dir.mkdir(exist_ok=True)
-        
+
         for i, sub in enumerate(ctx.optimized_subtitles):
             tts_path = tts_dir / f"tts_{i}.wav"
 
@@ -98,13 +103,21 @@ class VolcengineV2SynthesizeVoiceStage(BasePipelineStage):
                     if idx < len(ctx.voice_types)
                     else ctx.voice_types[0]
                 )
-
+            context_text = (
+                emotion_context.positive
+                if sub.sentiment == Sentiment.POSITIVE
+                else (
+                    emotion_context.negative
+                    if sub.sentiment == Sentiment.NEGATIVE
+                    else emotion_context.neutral
+                )
+            )
             self.tts.synthesize(
                 text=sub.translated_text,
                 expect_duration_ms=sub.tts_expected_duration_ms,
                 output_path=tts_path,
                 voice_type=speaker_voice_map[sub.speaker],
-                context_texts=[context_texts[i]] if context_texts[i] else None,
+                context_texts=[context_text] if context_text else None,
                 section_id=ctx.task_id,  # 传入上下文标识
             )
             sub.translated_tts_path = str(tts_path)
@@ -114,10 +127,15 @@ class VolcengineV2SynthesizeVoiceStage(BasePipelineStage):
 
     def set_data(self, ctx, data):
         pass
+    
+    def self_check(self, ctx):
+        pass
+
+    def check_confirm(self, ctx, data):
+        pass
 
     @staticmethod
     def _check_speech_text_is_blank(text: str) -> bool:
         # 判断文本是否只包含不可读文本（如标点）
         readable_content = re.sub(r"[^\w\s]", "", text)
         return len(readable_content.strip()) == 0
-    

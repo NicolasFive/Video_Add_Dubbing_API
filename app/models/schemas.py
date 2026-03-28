@@ -3,6 +3,8 @@ from typing import Optional, List
 from datetime import datetime
 from enum import Enum
 
+from app.models.domain import SelfCheckItem
+
 # --- 请求模型 ---
 # 由于入参可能包含文件上传和普通字段，建议在 endpoint 中直接使用 FastAPI 的参数类型（UploadFile, Form 等），而不是在 Pydantic 模型中定义。
 
@@ -59,6 +61,15 @@ class OptimizeUpdateResult(BaseModel):
     stage: str
     message: str
 
+
+class SelfCheckDataResult(BaseModel):
+    task_id: str
+    stage: str
+    data: List[SelfCheckItem] = Field(default_factory=list)
+
+class CheckConfirmDataResult(BaseModel):
+    task_id: str
+    stage: str
 
 class PipelineConfigItem(BaseModel):
     key: str

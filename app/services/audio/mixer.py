@@ -1,13 +1,19 @@
 from pydub import AudioSegment
 from pydub.utils import make_chunks
 import logging
+from typing import Optional
+
 
 class PydubMixAudio:
 
     def init_voice(self, voice_path: str):
         self.voice_file = AudioSegment.from_file(voice_path)
 
-    def add_overlay(self, overlay_path: str, start_time_ms:int, duck_db=-10):
+    def add_overlay(
+        self, overlay_path: str, start_time_ms: int, duck_db: Optional[int]
+    ):
+        if duck_db is None:
+            duck_db = -10  # 默认降音量 10dB
         overlay_file = AudioSegment.from_file(overlay_path)
         overlay_duration = len(overlay_file)
 

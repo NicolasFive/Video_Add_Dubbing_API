@@ -25,6 +25,7 @@ def run_dubbing_task(
     line_type: str = "default",
     start_step: str = None,
     end_step: str = None,
+    duck_db: Optional[int] = None,
 ):
     """异步执行配音任务"""
     work_dir = FileManager.get_task_dir(task_id)    
@@ -36,6 +37,7 @@ def run_dubbing_task(
         work_dir=str(work_dir),
         voice_types=voice_types,
         line_type=line_type,
+        duck_db=duck_db,
     )
 
     # 如果指定了 start_step，尝试加载之前保存的上下文

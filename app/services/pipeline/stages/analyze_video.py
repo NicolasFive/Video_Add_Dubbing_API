@@ -23,6 +23,12 @@ class FFprobeAnalyzeVideoStage(BasePipelineStage):
     def set_data(self, ctx, data):
         pass
 
+    def self_check(self, ctx):
+        pass
+
+    def check_confirm(self, ctx, data):
+        pass
+
     @staticmethod
     def _get_video_dimensions(video_path) -> tuple[int, int]:
         # 使用 ffprobe 获取视频信息

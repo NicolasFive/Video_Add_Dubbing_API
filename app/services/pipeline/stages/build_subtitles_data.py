@@ -5,6 +5,7 @@ from dataclasses import asdict
 from app.models.domain import (
     DurationRating,
     ProcessingContext,
+    SelfCheckItem,
     SubtitleLine,
 )
 from app.services.pipeline.base import BasePipelineStage
@@ -53,6 +54,13 @@ class BuildSubtitlesStage(BasePipelineStage):
     def set_data(self, ctx: ProcessingContext, data: list[dict]) -> None:
         ctx.subtitles = [SubtitleLine(**item) for item in data]
         self._save_subtitles_log(ctx)
+
+    def self_check(self, ctx):
+        pass
+
+    def check_confirm(self, ctx, data):
+        pass
+
 
     def _save_subtitles_log(self, ctx: ProcessingContext) -> None:
         self._save_log(
@@ -145,6 +153,30 @@ class OptimizeSubtitlesStage(BasePipelineStage):
         ctx.optimized_subtitles = [SubtitleLine(**item) for item in data]
         self._save_subtitles_log(ctx)
 
+    def self_check(self, ctx) -> list[SelfCheckItem]:
+        # 检查是否有优化后的字幕仍然过长
+        check_results = []
+        for i, sub in enumerate(ctx.optimized_subtitles):
+            if sub.tts_duration_rating == DurationRating.TOO_LONG:
+                check_results.append(
+                    SelfCheckItem(
+                        index=i,
+                        check_point="tts_duration_rating",
+                        issue=f"优化后的字幕仍然过长，原文：{sub.original_text}",
+                        warning_content=sub.translated_text,
+                        confirm_content=sub.translated_text,
+                    )
+                )
+
+        return check_results
+
+    def check_confirm(self, ctx, data: list[SelfCheckItem]) -> None:
+        for item in data:
+            ctx.optimized_subtitles[item.index].translated_text = item.confirm_content
+            evaluate_speed_ratio(ctx.optimized_subtitles[item.index])
+        self._save_subtitles_log(ctx)
+
+
     def _save_subtitles_log(self, ctx: ProcessingContext) -> None:
         self._save_log(
             ctx,
@@ -176,6 +208,12 @@ class OptimizeSubtitlesWithoutSpeedCheckStage(BasePipelineStage):
     def set_data(self, ctx: ProcessingContext, data: list[dict]) -> None:
         ctx.optimized_subtitles = [SubtitleLine(**item) for item in data]
         self._save_subtitles_log(ctx)
+
+    def self_check(self, ctx) -> list[SelfCheckItem]:
+        pass
+
+    def check_confirm(self, ctx, data: list[SelfCheckItem]) -> None:
+        pass
 
     def _save_subtitles_log(self, ctx: ProcessingContext) -> None:
         self._save_log(

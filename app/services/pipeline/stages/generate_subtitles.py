@@ -25,7 +25,6 @@ class RuleBasedGenerateSubtitlesStage(BasePipelineStage):
         ctx.final_subtitle_path = str(srt_path)
 
     def get_data(self, ctx) -> str:
-
         srt_path = Path(ctx.work_dir) / "subtitles.srt"
         if srt_path.exists():
             with open(srt_path, "r", encoding="utf-8") as f:
@@ -37,3 +36,9 @@ class RuleBasedGenerateSubtitlesStage(BasePipelineStage):
         data = data.replace("\r", "")  # 将转义的换行符转换为实际的换行
         with open(srt_path, "w", encoding="utf-8") as f:
             f.write(data)
+
+    def self_check(self, ctx):
+        pass
+
+    def check_confirm(self, ctx, data):
+        pass

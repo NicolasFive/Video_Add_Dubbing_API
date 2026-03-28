@@ -40,10 +40,24 @@ class PydubMixAudioStage(BasePipelineStage):
                         self.adjust_oversize_audio(
                             Path(sub.translated_tts_path), adjust_ratio
                         )
+                # 3. 处理最后一条字幕，如果它的时长超出音频总长度，也需要调整速率
+                else:
+                    total_duration_sec = get_audio_duration(Path(ctx.instrumentals_audio_path))
+                    if sub.start_ms + duration_sec * 1000 > total_duration_sec * 1000:
+                        adjust_ratio = (duration_sec * 1000) / (total_duration_sec * 1000 - sub.start_ms)
+                        adjust_ratio = math.ceil(adjust_ratio * 100) / 100  # 保留两位小数
+                        logger.info(
+                            f"Last subtitle {i} exceeds total audio length, adjusting speed ratio to {adjust_ratio:.2f}"
+                        )
+                        self.adjust_oversize_audio(
+                            Path(sub.translated_tts_path), adjust_ratio
+                        )
 
+                # 4. 添加叠加
                 self.audio_mixer.add_overlay(
                     sub.translated_tts_path,
                     start_time_ms=sub.start_ms,
+                    duck_db=ctx.duck_db
                 )
         self.audio_mixer.export(str(mixed_audio_path))
 
@@ -82,4 +96,10 @@ class PydubMixAudioStage(BasePipelineStage):
         pass
 
     def set_data(self, ctx, data):
+        pass
+    
+    def self_check(self, ctx):
+        pass
+
+    def check_confirm(self, ctx, data):
         pass

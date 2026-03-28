@@ -11,7 +11,7 @@ from app.services.tts.volcengine.binary_v2 import run_volcengine
 import math
 from typing import Optional
 from pydantic import BaseModel
-import re
+from app.services.tts.volcano_tts import get_volcengine_params
 
 logger = logging.getLogger(__name__)
 
@@ -129,79 +129,4 @@ class VolcanoTTSService:
                 retry=False
             )
 
-
-
-
-class VolcengineParams(BaseModel):
-    speed_ratio: float
-    loudness_ratio: float
-
-
-def get_volcengine_params(
-    text: str,
-    target_duration_sec: Optional[float] = None,
-    # 中文基准：约 4.8 字/秒 (不含标点停顿)
-    base_cps_zh: float = 4.8,
-    # 英文基准：约 2.5 词/秒
-    base_wps_en: float = 2.5,
-    # 标点停顿估算 (秒) - 可根据实际 TTS 引擎表现微调
-    pause_comma: float = 0.25,   # 逗号、顿号
-    pause_period: float = 0.45,  # 句号、问号、感叹号
-    pause_other: float = 0.15,   # 分号、冒号等
-) -> VolcengineParams:
-    if target_duration_sec is None or target_duration_sec <= 0:
-        return VolcengineParams(speed_ratio=1.0, loudness_ratio=1.0)
-
-    # --- 1. 统计字符与单词 ---
-    
-    # 中文字符
-    zh_chars = re.findall(r"[\u4e00-\u9fff]", text)
-    zh_count = len(zh_chars)
-
-    # 英文单词
-    en_words = re.findall(r"[a-zA-Z]+", text)
-    en_count = len(en_words)
-
-    if zh_count == 0 and en_count == 0:
-        return VolcengineParams(speed_ratio=1.0, loudness_ratio=1.0)
-
-    # --- 2. 统计标点符号并估算停顿时长 ---
-    
-    # 定义标点正则
-    commas = len(re.findall(r"[，,、]", text))      # 短停顿
-    periods = len(re.findall(r"[。.?!！]", text))   # 长停顿
-    others = len(re.findall(r"[；:…]", text))       # 中等停顿
-    
-    # 计算标点总耗时
-    punctuation_duration = (
-        commas * pause_comma +
-        periods * pause_period +
-        others * pause_other
-    )
-
-    # --- 3. 计算总预估时长 ---
-    
-    estimated_zh_duration = zh_count / base_cps_zh
-    estimated_en_duration = en_count / base_wps_en
-    
-    # 总时长 = 读音时长 + 标点停顿时长
-    estimated_duration_sec = estimated_zh_duration + estimated_en_duration + punctuation_duration
-
-    # --- 4. 计算速度比率 ---
-    if estimated_duration_sec == 0:
-        speed_ratio = 1.0
-    else:
-        # 目标时长越短，需要的速度比率越大
-        speed_ratio = estimated_duration_sec / target_duration_sec
-
-    # 限制速度范围 (0.1x ~ 2.0x)
-    speed_ratio = round(max(0.1, min(2.0, speed_ratio)), 1)
-
-    # --- 5. 动态调整音量 ---
-    loudness_ratio = 1.0
-    loudness_offset = (speed_ratio - 1.0) * 0.5
-    loudness_ratio += round(loudness_offset, 1)
-    loudness_ratio = max(0.5, min(2.0, loudness_ratio))
-
-    return VolcengineParams(speed_ratio=speed_ratio, loudness_ratio=loudness_ratio)
 

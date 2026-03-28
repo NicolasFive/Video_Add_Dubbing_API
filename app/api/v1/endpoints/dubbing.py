@@ -55,6 +55,7 @@ async def submit_dubbing_task(
     task_id: Optional[str] = Form(None),
     start_step: Optional[str] = Form(None),
     end_step: Optional[str] = Form(None),
+    duck_db: Optional[int] = Form(None),
 ):
     # 1. 校验参数
     validate_params(task_id=task_id, video=video, audio=audio)
@@ -87,6 +88,7 @@ async def submit_dubbing_task(
         line_type=line_type,
         start_step=start_step,
         end_step=end_step,
+        duck_db=duck_db,
     )
 
     return TaskResponse(
