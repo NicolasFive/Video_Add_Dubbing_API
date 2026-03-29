@@ -1,7 +1,6 @@
 import re
-
 from app.models.domain import SubtitleLine
-from pathlib import Path
+from app.utils.time_utils import ms_to_srt_time
 
 
 class SubtitleGenerator:
@@ -26,24 +25,12 @@ class SubtitleGenerator:
             for i, sub in enumerate(handled_subtitles):
                 f.write(f"{i+1}\n")
                 f.write(
-                    f"{self._ms_to_srt_time(sub.start_ms)} --> {self._ms_to_srt_time(sub.end_ms)}\n"
+                    f"{ms_to_srt_time(sub.start_ms)} --> {ms_to_srt_time(sub.end_ms)}\n"
                 )
                 if original_text_on:
                     f.write(f"{sub.translated_text}\n{sub.original_text}\n\n")
                 else:
                     f.write(f"{sub.translated_text}\n\n")
-
-    def _ms_to_srt_time(self, ms: int) -> str:
-        """
-        将毫秒转换为 SRT 时间格式: HH:MM:SS,mmm
-        """
-        hours = ms // 3600000
-        minutes = (ms % 3600000) // 60000
-        seconds = (ms % 60000) // 1000
-        milliseconds = ms % 1000  # 直接取余数，得到 0-999 的毫秒数
-
-        # 格式化为 HH:MM:SS,mmm (注意毫秒是3位)
-        return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"
 
     def _split_long_subtitles(
         self,

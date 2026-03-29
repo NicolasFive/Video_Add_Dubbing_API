@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Optional
 
+from app.services.video.cutter import VideoDeleteSegment
+
 
 class Sentiment(str, Enum):
     POSITIVE = "POSITIVE"
@@ -73,6 +75,7 @@ class ProcessingContext:
     translations: List[TranslateLine] = field(default_factory=list)
     subtitles: List[SubtitleLine] = field(default_factory=list)
     optimized_subtitles: List[SubtitleLine] = field(default_factory=list)
+    video_delete_segments: List[VideoDeleteSegment] = field(default_factory=list)
 
     # 最终结果
     final_video_path: Optional[str] = None

@@ -21,6 +21,11 @@ from app.services.pipeline.stages.translate import OpenAITranslateStage
 from app.services.pipeline.stages.complete import CompleteStage
 
 from app.services.pipeline.stages.replace_audio import FFmpegOriginalSwapStage
+from app.services.pipeline.stages.video_cut import (
+    MarkSegmentBySubtitlesStage,
+    VideoCutByFFmpegStage,
+)
+
 
 __all__ = [
     "FFprobeAnalyzeVideoStage",
@@ -38,5 +43,7 @@ __all__ = [
     "FFmpegBurnSubtitlesStage",
     "CompleteStage",
     "FFmpegOriginalSwapStage",
-    "OptimizeSubtitlesWithoutSpeedCheckStage"
+    "OptimizeSubtitlesWithoutSpeedCheckStage",
+    "MarkSegmentBySubtitlesStage",
+    "VideoCutByFFmpegStage",
 ]

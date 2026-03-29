@@ -56,10 +56,26 @@ class BuildSubtitlesStage(BasePipelineStage):
         self._save_subtitles_log(ctx)
 
     def self_check(self, ctx):
-        pass
+        # 检查是否有优化后的字幕仍然过长
+        check_results = []
+        for i, sub in enumerate(ctx.subtitles):
+            if sub.tts_duration_rating == DurationRating.TOO_LONG:
+                check_results.append(
+                    SelfCheckItem(
+                        index=i,
+                        check_point="tts_duration_rating",
+                        issue=f"优化后的字幕仍然过长（{sub.tts_eval_speed_ratio}），原文：{sub.original_text}",
+                        warning_content=sub.translated_text,
+                        confirm_content=sub.translated_text,
+                    )
+                )
+
+        return check_results
 
     def check_confirm(self, ctx, data):
-        pass
+        for item in data:
+            ctx.subtitles[item.index].translated_text = item.confirm_content
+        self._save_subtitles_log(ctx)
 
 
     def _save_subtitles_log(self, ctx: ProcessingContext) -> None:
@@ -162,7 +178,7 @@ class OptimizeSubtitlesStage(BasePipelineStage):
                     SelfCheckItem(
                         index=i,
                         check_point="tts_duration_rating",
-                        issue=f"优化后的字幕仍然过长，原文：{sub.original_text}",
+                        issue=f"优化后的字幕仍然过长（{sub.tts_eval_speed_ratio}），原文：{sub.original_text}",
                         warning_content=sub.translated_text,
                         confirm_content=sub.translated_text,
                     )

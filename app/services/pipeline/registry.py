@@ -17,7 +17,9 @@ from app.services.pipeline.stages import (
     FFmpegBurnSubtitlesStage,
     CompleteStage,
     FFmpegOriginalSwapStage,
-    OptimizeSubtitlesWithoutSpeedCheckStage
+    OptimizeSubtitlesWithoutSpeedCheckStage,
+    MarkSegmentBySubtitlesStage,
+    VideoCutByFFmpegStage,
 )
 STAGE_BUILDERS = {
     "Analyzing Video": FFprobeAnalyzeVideoStage,
@@ -35,6 +37,8 @@ STAGE_BUILDERS = {
     "Generating Subtitles": RuleBasedGenerateSubtitlesStage,
     "Burning Subtitles": FFmpegBurnSubtitlesStage,
     "Original Swap": FFmpegOriginalSwapStage,
+    "Mark Delete Segment": MarkSegmentBySubtitlesStage,
+    "Video Cutting": VideoCutByFFmpegStage,
     "Complete": CompleteStage,
 }
 
@@ -43,8 +47,8 @@ DOUBAO_V1_STAGE_CONFIGS = [
     PipelineStageConfig("Separating Vocals", "分离人声", 10),
     PipelineStageConfig("Transcribing", "转录", 20),
     PipelineStageConfig("Translating", "翻译", 30),
-    PipelineStageConfig("Building Subtitles", "生成字幕", 40),
-    PipelineStageConfig("Optimizing Subtitles", "优化字幕", 48),
+    PipelineStageConfig("Building Subtitles", "生成字幕数据", 40),
+    PipelineStageConfig("Optimizing Subtitles", "优化字幕数据", 48),
     PipelineStageConfig("Synthesizing Voice", "豆包语音合成1.0", 50),
     PipelineStageConfig("Mixing Audio", "混合音频", 60),
     PipelineStageConfig("Replacing Audio", "替换音频", 70),
@@ -67,6 +71,24 @@ DOUBAO_V2_STAGE_CONFIGS = [
     PipelineStageConfig("Generating Subtitles", "生成字幕", 80),
     PipelineStageConfig("Burning Subtitles", "烧录字幕", 90),
     PipelineStageConfig("Original Swap", "原声置换", 95),
+    PipelineStageConfig("Complete", "完成", 100),
+]
+
+DOUBAO_V2_STAGE_CONFIGS = [
+    PipelineStageConfig("Analyzing Video", "分析视频", 5),
+    PipelineStageConfig("Separating Vocals", "分离人声", 10),
+    PipelineStageConfig("Transcribing", "转录", 20),
+    PipelineStageConfig("Translating", "翻译", 30),
+    PipelineStageConfig("Building Subtitles", "生成字幕", 40),
+    PipelineStageConfig("Optimizing Subtitles", "优化字幕", 48),
+    PipelineStageConfig("Synthesizing Voice V2", "豆包语音合成2.0", 50),
+    PipelineStageConfig("Mixing Audio", "混合音频", 60),
+    PipelineStageConfig("Replacing Audio", "替换音频", 70),
+    PipelineStageConfig("Generating Subtitles", "生成字幕", 80),
+    PipelineStageConfig("Burning Subtitles", "烧录字幕", 90),
+    PipelineStageConfig("Original Swap", "原声置换", 95),
+    PipelineStageConfig("Mark Delete Segment", "标记删除片段", 96),
+    PipelineStageConfig("Video Cutting", "视频裁剪", 97),
     PipelineStageConfig("Complete", "完成", 100),
 ]
 

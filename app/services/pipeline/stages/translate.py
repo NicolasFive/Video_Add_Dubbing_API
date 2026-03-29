@@ -24,22 +24,14 @@ class OpenAITranslateStage(BasePipelineStage):
                 )
             )
         ctx.translations = translations
-        self._save_log(
-            ctx,
-            log_name="translations",
-            log_data=[asdict(item) for item in translations],
-        )
+        self._save_translations_log(ctx)
 
     def get_data(self, ctx: ProcessingContext) -> list[dict]:
         return [asdict(item) for item in ctx.translations]
 
     def set_data(self, ctx: ProcessingContext, data: list[dict]) -> None:
         ctx.translations = [TranslateLine(**item) for item in data]
-        self._save_log(
-            ctx,
-            log_name="translations",
-            log_data=[asdict(item) for item in ctx.translations],
-        )
+        self._save_translations_log(ctx)
 
     def self_check(self, ctx) -> list[SelfCheckItem]:
         # 1. 原文不为空时，译文不能为空
@@ -73,6 +65,9 @@ class OpenAITranslateStage(BasePipelineStage):
     def check_confirm(self, ctx, data: list[SelfCheckItem]) -> None:
         for item in data:
             ctx.translations[item.index].translated_text = item.confirm_content
+        self._save_translations_log(ctx)
+
+    def _save_translations_log(self, ctx: ProcessingContext) -> None:
         self._save_log(
             ctx,
             log_name="translations",
