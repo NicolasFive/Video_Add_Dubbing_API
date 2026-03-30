@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict
-
+import json
 from app.models.domain import (
     DurationRating,
     ProcessingContext,
@@ -46,14 +46,32 @@ class BuildSubtitlesStage(BasePipelineStage):
             evaluate_speed_ratio(sub)
             subtitles.append(sub)
         ctx.subtitles = subtitles
-        self._save_subtitles_log(ctx)
 
+    def restore(self, ctx: ProcessingContext) -> bool:
+        log_data = self.read_log(ctx)
+        if not log_data:
+            return False
+        log_data = json.loads(log_data)
+        ctx.subtitles = [SubtitleLine(**item) for item in log_data]
+        return True
+
+    def logfile_name(self) -> str:
+        return "subtitles"
+    
+    def save_log(self, ctx: ProcessingContext) -> None:
+        log_name = self.logfile_name()
+        log_data = self.get_data(ctx)
+        super()._save_log(ctx, log_name=log_name, log_data=log_data)
+
+    def read_log(self, ctx: ProcessingContext) -> str:
+        log_name = self.logfile_name()
+        return super()._read_log(ctx, log_name=log_name)
+    
     def get_data(self, ctx: ProcessingContext) -> list[dict]:
         return [asdict(item) for item in ctx.subtitles]
 
     def set_data(self, ctx: ProcessingContext, data: list[dict]) -> None:
         ctx.subtitles = [SubtitleLine(**item) for item in data]
-        self._save_subtitles_log(ctx)
 
     def self_check(self, ctx):
         # 检查是否有优化后的字幕仍然过长
@@ -75,15 +93,7 @@ class BuildSubtitlesStage(BasePipelineStage):
     def check_confirm(self, ctx, data):
         for item in data:
             ctx.subtitles[item.index].translated_text = item.confirm_content
-        self._save_subtitles_log(ctx)
 
-
-    def _save_subtitles_log(self, ctx: ProcessingContext) -> None:
-        self._save_log(
-            ctx,
-            log_name=f"subtitles",
-            log_data=[asdict(item) for item in ctx.subtitles],
-        )
 
 
 class OptimizeSubtitlesStage(BasePipelineStage):
@@ -124,7 +134,6 @@ class OptimizeSubtitlesStage(BasePipelineStage):
 
         if not optimized_subtitles:
             ctx.optimized_subtitles = optimized_subtitles
-            self._save_subtitles_log(ctx)
             return
 
         last_sub = optimized_subtitles[-1]
@@ -160,14 +169,32 @@ class OptimizeSubtitlesStage(BasePipelineStage):
                 break
 
         ctx.optimized_subtitles = optimized_subtitles
-        self._save_subtitles_log(ctx)
 
+    def restore(self, ctx: ProcessingContext) -> bool:
+        log_data = self.read_log(ctx)
+        if not log_data:
+            return False
+        log_data = json.loads(log_data)
+        ctx.optimized_subtitles = [SubtitleLine(**item) for item in log_data]
+        return True
+
+    def logfile_name(self) -> str:
+        return "optimized_subtitles"
+    
+    def save_log(self, ctx: ProcessingContext) -> None:
+        log_name = self.logfile_name()
+        log_data = self.get_data(ctx)
+        super()._save_log(ctx, log_name=log_name, log_data=log_data)
+    
+    def read_log(self, ctx: ProcessingContext) -> str:
+        log_name = self.logfile_name()
+        return super()._read_log(ctx, log_name=log_name)
+    
     def get_data(self, ctx: ProcessingContext) -> list[dict]:
         return [asdict(item) for item in ctx.optimized_subtitles]
 
     def set_data(self, ctx: ProcessingContext, data: list[dict]) -> None:
         ctx.optimized_subtitles = [SubtitleLine(**item) for item in data]
-        self._save_subtitles_log(ctx)
 
     def self_check(self, ctx) -> list[SelfCheckItem]:
         # 检查是否有优化后的字幕仍然过长
@@ -190,15 +217,7 @@ class OptimizeSubtitlesStage(BasePipelineStage):
         for item in data:
             ctx.optimized_subtitles[item.index].translated_text = item.confirm_content
             evaluate_speed_ratio(ctx.optimized_subtitles[item.index])
-        self._save_subtitles_log(ctx)
 
-
-    def _save_subtitles_log(self, ctx: ProcessingContext) -> None:
-        self._save_log(
-            ctx,
-            log_name=f"optimized_subtitles",
-            log_data=[asdict(item) for item in ctx.optimized_subtitles],
-        )
 
 
 
@@ -216,14 +235,32 @@ class OptimizeSubtitlesWithoutSpeedCheckStage(BasePipelineStage):
             optimized_subtitles.append(sub)
             prev_sub = sub
         ctx.optimized_subtitles = optimized_subtitles
-        self._save_subtitles_log(ctx)
 
+    def restore(self, ctx: ProcessingContext) -> bool:
+        log_data = self.read_log(ctx)
+        if not log_data:
+            return False
+        log_data = json.loads(log_data)
+        ctx.optimized_subtitles = [SubtitleLine(**item) for item in log_data]
+        return True
+
+    def logfile_name(self) -> str:
+        return "optimized_subtitles"
+    
+    def save_log(self, ctx: ProcessingContext) -> None:
+        log_name = self.logfile_name()
+        log_data = self.get_data(ctx)
+        super()._save_log(ctx, log_name=log_name, log_data=log_data)
+    
+    def read_log(self, ctx: ProcessingContext) -> str:
+        log_name = self.logfile_name()
+        return super()._read_log(ctx, log_name=log_name)
+    
     def get_data(self, ctx: ProcessingContext) -> list[dict]:
         return [asdict(item) for item in ctx.optimized_subtitles]
 
     def set_data(self, ctx: ProcessingContext, data: list[dict]) -> None:
         ctx.optimized_subtitles = [SubtitleLine(**item) for item in data]
-        self._save_subtitles_log(ctx)
 
     def self_check(self, ctx) -> list[SelfCheckItem]:
         pass
@@ -231,9 +268,3 @@ class OptimizeSubtitlesWithoutSpeedCheckStage(BasePipelineStage):
     def check_confirm(self, ctx, data: list[SelfCheckItem]) -> None:
         pass
 
-    def _save_subtitles_log(self, ctx: ProcessingContext) -> None:
-        self._save_log(
-            ctx,
-            log_name=f"optimized_subtitles",
-            log_data=[asdict(item) for item in ctx.optimized_subtitles],
-        )

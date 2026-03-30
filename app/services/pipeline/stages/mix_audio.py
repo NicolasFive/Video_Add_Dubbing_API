@@ -61,6 +61,19 @@ class PydubMixAudioStage(BasePipelineStage):
                 )
         self.audio_mixer.export(str(mixed_audio_path))
 
+    def restore(self, ctx: ProcessingContext) -> bool:
+        pass
+
+    def logfile_name(self) -> str:
+        pass
+    
+    def save_log(self, ctx: ProcessingContext) -> None:
+        pass
+    
+    def read_log(self, ctx: ProcessingContext) -> str:
+        log_name = self.logfile_name()
+        return super()._read_log(ctx, log_name=log_name)
+    
     def adjust_oversize_audio(self, audio_path: Path, speed_ratio: float):
         
             # ffmpeg 使用 atempo 滤镜应用速率

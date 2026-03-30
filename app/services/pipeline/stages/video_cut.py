@@ -33,14 +33,32 @@ class MarkSegmentBySubtitlesStage(BasePipelineStage):
         if end_ms > begin_ms:
             delete_segments.append(VideoDeleteSegment(start_ms=begin_ms, end_ms=end_ms))
         ctx.delete_segments = delete_segments
-        self._save_delete_segments_log(ctx)
 
+    def restore(self, ctx: ProcessingContext) -> bool:
+        log_data = self.read_log(ctx)
+        if not log_data:
+            return False
+        log_data = json.loads(log_data)
+        ctx.delete_segments = [VideoDeleteSegment(**item) for item in log_data]
+        return True
+
+    def logfile_name(self) -> str:
+        return "delete_segments"
+    
+    def save_log(self, ctx: ProcessingContext) -> None:
+        log_name = self.logfile_name()
+        log_data = self.get_data(ctx)
+        super()._save_log(ctx, log_name=log_name, log_data=log_data)
+    
+    def read_log(self, ctx: ProcessingContext) -> str:
+        log_name = self.logfile_name()
+        return super()._read_log(ctx, log_name=log_name)
+    
     def get_data(self, ctx) -> list[dict]:
         return [asdict(item) for item in ctx.delete_segments]
 
     def set_data(self, ctx, data: list[dict]):
         ctx.delete_segments = [VideoDeleteSegment(**item) for item in data]
-        self._save_delete_segments_log(ctx)
 
     def self_check(self, ctx) -> list[SelfCheckItem]:
         # 判断是否存在裁剪超长的片段，避免导致视频内容出现较大缺失。
@@ -67,14 +85,6 @@ class MarkSegmentBySubtitlesStage(BasePipelineStage):
                 segment_dict = json.loads(item.confirm_content)
                 segment = VideoDeleteSegment(**segment_dict)
                 ctx.delete_segments[item.index] = segment
-        self._save_delete_segments_log(ctx)
-
-    def _save_delete_segments_log(self, ctx: ProcessingContext) -> None:
-        self._save_log(
-            ctx,
-            log_name="delete_segments",
-            log_data=[asdict(item) for item in ctx.delete_segments],
-        )
 
 
 class VideoCutByFFmpegStage(BasePipelineStage):
@@ -82,6 +92,19 @@ class VideoCutByFFmpegStage(BasePipelineStage):
         cutter = FFmpegVideoCutter(ctx.final_video_path or ctx.input_video_path)
         cutter.delete(ctx.delete_segments)
 
+    def restore(self, ctx: ProcessingContext) -> bool:
+        pass
+
+    def logfile_name(self) -> str:
+        pass
+    
+    def save_log(self, ctx: ProcessingContext) -> None:
+        pass
+    
+    def read_log(self, ctx: ProcessingContext) -> str:
+        log_name = self.logfile_name()
+        return super()._read_log(ctx, log_name=log_name)
+    
     def get_data(self, ctx):
         pass
 

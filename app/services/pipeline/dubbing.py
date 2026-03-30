@@ -107,9 +107,13 @@ class DubbingPipeline:
                 # 调用具体环节实现
                 self._run_stage(stage_cfg)
                 # 保存上下文以支持断点续传
-                context_file = Path(self.ctx.work_dir) / "context.pkl"
-                with open(context_file, "wb") as f:
+                context_temp_file = Path(self.ctx.work_dir) / "context_temp.pkl"
+                with open(context_temp_file, "wb") as f:
                     pickle.dump(self.ctx, f)
+                context_file = Path(self.ctx.work_dir) / "context.pkl"
+                if context_file.exists():
+                    context_file.unlink()
+                context_temp_file.rename(Path(self.ctx.work_dir) / "context.pkl")
                 # 判断是否设置结束步骤，是则判断当前是否需要结束
                 if end_step and stage_cfg.key == end_step:
                     break
@@ -149,7 +153,20 @@ class DubbingPipeline:
         if not stage:
             raise ValueError(f"No stage implementation registered for key: {stage_cfg.key}")
         # 通过 ctx 与其他环节协作
-        stage.run(self.ctx)
+        try:
+            if not self.ctx.no_cache:
+                success = stage.restore(self.ctx)
+            else:
+                success = False
+                
+            if not success:
+                stage.run(self.ctx)
+                stage.save_log(self.ctx)
+            else:
+                logger.info(f"Task {self.ctx.task_id}: {stage_cfg.key} restored from log, skipped execution.")
+        except Exception as e:
+            stage.run(self.ctx)
+            stage.save_log(self.ctx)
 
     # 校验流程配置与注册表的一致性
     def _validate_stage_configs(self) -> None:

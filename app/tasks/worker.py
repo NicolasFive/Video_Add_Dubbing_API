@@ -26,6 +26,7 @@ def run_dubbing_task(
     start_step: str = None,
     end_step: str = None,
     duck_db: Optional[int] = None,
+    no_cache: bool = False,
 ):
     """异步执行配音任务"""
     work_dir = FileManager.get_task_dir(task_id)    
@@ -38,21 +39,21 @@ def run_dubbing_task(
         voice_types=voice_types,
         line_type=line_type,
         duck_db=duck_db,
+        no_cache=no_cache,
     )
 
-    # 如果指定了 start_step，尝试加载之前保存的上下文
-    if start_step:
-        context_file = work_dir / "context.pkl"
-        if context_file.exists():
-            with open(context_file, "rb") as f:
-                ctx = pickle.load(f)
-            # 更新可能变化的参数
-            ctx.input_video_path = ctx.input_video_path if not input_video_path else input_video_path
-            ctx.input_audio_path = ctx.input_audio_path if not input_audio_path else input_audio_path
-            ctx.voice_types = ctx.voice_types if not voice_types else voice_types
-            # line_type 从参数中获取，不覆盖已保存的
-            if line_type == "default":
-                line_type = ctx.line_type
+    # 尝试加载之前保存的上下文
+    context_file = work_dir / "context.pkl"
+    if context_file.exists():
+        with open(context_file, "rb") as f:
+            ctx = pickle.load(f)
+        # 更新可能变化的参数
+        ctx.input_video_path = ctx.input_video_path if not input_video_path else input_video_path
+        ctx.input_audio_path = ctx.input_audio_path if not input_audio_path else input_audio_path
+        ctx.voice_types = ctx.voice_types if not voice_types else voice_types
+        # line_type 从参数中获取，不覆盖已保存的
+        if line_type == "default":
+            line_type = ctx.line_type
 
     def update_progress(step, percent, error=None):
         # 更新 Redis 中的任务状态

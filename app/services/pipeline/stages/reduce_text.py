@@ -49,6 +49,20 @@ class OpenAIReduceTextStage(BasePipelineStage):
                     sub.translated_text = reduced_text
                 reduced_index += 1
         self._save_log(ctx, log_name="reduced_texts", log_data=[asdict(rd) for rd in reducer_data_list])
+
+
+    def restore(self, ctx: ProcessingContext) -> bool:
+        pass
+
+    def logfile_name(self) -> str:
+        pass
+    
+    def save_log(self, ctx: ProcessingContext) -> None:
+        pass
+    
+    def read_log(self, ctx: ProcessingContext) -> str:
+        log_name = self.logfile_name()
+        return super()._read_log(ctx, log_name=log_name)
         
     def get_data(self, ctx):
         pass

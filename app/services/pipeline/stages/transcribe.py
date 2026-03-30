@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from app.models.domain import ProcessingContext, Sentiment, TranscriptLine
 from app.services.transcription.assemblyai_client import AssemblyAIService
-
+import json
 from app.services.pipeline.base import BasePipelineStage
 
 
@@ -13,14 +13,35 @@ class AssemblyAITranscribeStage(BasePipelineStage):
     def run(self, ctx: ProcessingContext) -> None:
         result = self.transcriber.transcribe(ctx.vocals_audio_path)
         raw_data = result.json_response
-        self._save_log(ctx, log_name="transcriptions", log_data=raw_data)
+        ctx.transcript_json = raw_data
         ctx.transcripts = self._parse_transcript(raw_data)
         
-    def get_data(self, ctx):
-        pass
+    def restore(self, ctx: ProcessingContext) -> bool:
+        log_data = self.read_log(ctx)
+        if not log_data:
+            return False
+        log_data = json.loads(log_data)
+        ctx.transcript_json = log_data
+        ctx.transcripts = self._parse_transcript(log_data)
+        return True
 
-    def set_data(self, ctx, data):
-        pass
+    def logfile_name(self) -> str:
+        return "transcriptions"
+    
+    def save_log(self, ctx: ProcessingContext) -> None:
+        log_name = self.logfile_name()
+        log_data = self.get_data(ctx)
+        super()._save_log(ctx, log_name=log_name, log_data=log_data)
+    
+    def read_log(self, ctx: ProcessingContext) -> str:
+        log_name = self.logfile_name()
+        return super()._read_log(ctx, log_name=log_name)
+    
+    def get_data(self, ctx: ProcessingContext) -> dict:
+        return ctx.transcript_json
+
+    def set_data(self, ctx, data: dict):
+        ctx.transcript_json = data
     
     def self_check(self, ctx):
         pass

@@ -26,6 +26,19 @@ class RuleBasedGenerateSubtitlesStage(BasePipelineStage):
         )
         ctx.final_subtitle_path = str(srt_path)
 
+    def restore(self, ctx: ProcessingContext) -> bool:
+        pass
+
+    def logfile_name(self) -> str:
+        pass
+    
+    def save_log(self, ctx: ProcessingContext) -> None:
+        pass
+    
+    def read_log(self, ctx: ProcessingContext) -> str:
+        log_name = self.logfile_name()
+        return super()._read_log(ctx, log_name=log_name)
+    
     def get_data(self, ctx) -> str:
         srt_path = Path(ctx.work_dir) / "subtitles.srt"
         if srt_path.exists():

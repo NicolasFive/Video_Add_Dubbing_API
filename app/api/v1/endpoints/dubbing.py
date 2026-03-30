@@ -56,6 +56,7 @@ async def submit_dubbing_task(
     start_step: Optional[str] = Form(None),
     end_step: Optional[str] = Form(None),
     duck_db: Optional[int] = Form(None),
+    no_cache: Optional[bool] = Form(False),
 ):
     # 1. 校验参数
     validate_params(task_id=task_id, video=video, audio=audio)
@@ -89,6 +90,7 @@ async def submit_dubbing_task(
         start_step=start_step,
         end_step=end_step,
         duck_db=duck_db,
+        no_cache=no_cache,
     )
 
     return TaskResponse(

@@ -28,6 +28,19 @@ class FFmpegReplaceAudioStage(BasePipelineStage):
             str(video_with_dubbing),
         )
 
+    def restore(self, ctx: ProcessingContext) -> bool:
+        pass
+
+    def logfile_name(self) -> str:
+        pass
+    
+    def save_log(self, ctx: ProcessingContext) -> None:
+        pass
+    
+    def read_log(self, ctx: ProcessingContext) -> str:
+        log_name = self.logfile_name()
+        return super()._read_log(ctx, log_name=log_name)
+    
     def get_data(self, ctx):
         pass
 
@@ -57,6 +70,19 @@ class FFmpegOriginalSwapStage(BasePipelineStage):
         )
         self.replacer.replace(ctx.final_video_path, audio_path, str(output_path))
 
+    def restore(self, ctx: ProcessingContext) -> bool:
+        pass
+
+    def logfile_name(self) -> str:
+        pass
+    
+    def save_log(self, ctx: ProcessingContext) -> None:
+        pass
+    
+    def read_log(self, ctx: ProcessingContext) -> str:
+        log_name = self.logfile_name()
+        return super()._read_log(ctx, log_name=log_name)
+    
     def get_data(self, ctx):
         pass
 

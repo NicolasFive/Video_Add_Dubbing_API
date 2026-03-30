@@ -3,7 +3,7 @@ from __future__ import annotations
 import ffmpeg
 
 from app.models.domain import ProcessingContext
-
+import json
 from app.services.pipeline.base import BasePipelineStage
 
 
@@ -15,13 +15,40 @@ class FFprobeAnalyzeVideoStage(BasePipelineStage):
         ctx.subtitle_font_size = self._cal_subtitle_font_size(width, height)
         ctx.input_video_width = width
         ctx.input_video_height = height
-        self._save_log(ctx, log_name="video_info", log_data={"width": width, "height": height})
 
-    def get_data(self, ctx):
-        pass
+    def restore(self, ctx: ProcessingContext) -> bool:
+        log_data = self.read_log(ctx)
+        if not log_data:
+            return False
+        log_data = json.loads(log_data)
+        ctx.input_video_width = log_data.get("width")
+        ctx.input_video_height = log_data.get("height")
+        ctx.subtitle_font_size = log_data.get("subtitle_font_size")
+        return True
 
-    def set_data(self, ctx, data):
-        pass
+    def logfile_name(self) -> str:
+        return "video_info"
+
+    def save_log(self, ctx: ProcessingContext) -> None:
+        log_name = self.logfile_name()
+        log_data = self.get_data(ctx)
+        super()._save_log(ctx, log_name=log_name, log_data=log_data)
+
+    def read_log(self, ctx: ProcessingContext) -> str:
+        log_name = self.logfile_name()
+        return super()._read_log(ctx, log_name=log_name)
+
+    def get_data(self, ctx: ProcessingContext) -> dict:
+        return {
+            "width": ctx.input_video_width,
+            "height": ctx.input_video_height,
+            "subtitle_font_size": ctx.subtitle_font_size,
+        }
+
+    def set_data(self, ctx: ProcessingContext, data: dict) -> None:
+        ctx.input_video_width = data.get("width")
+        ctx.input_video_height = data.get("height")
+        ctx.subtitle_font_size = data.get("subtitle_font_size")
 
     def self_check(self, ctx):
         pass

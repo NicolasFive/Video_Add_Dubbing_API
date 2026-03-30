@@ -93,6 +93,7 @@ async def update_current_config(
         parsed_data = data  # 如果不是 JSON 格式，则直接使用原始字符串
     try:
         stage_impl.set_data(ctx, parsed_data)
+        stage_impl.save_log(ctx)
         with open(context_file, "wb") as f:
             pickle.dump(ctx, f)
     except Exception as exc:
@@ -150,6 +151,7 @@ async def check_confirm(
         )
     try:
         stage_impl.check_confirm(ctx, parsed_data)
+        stage_impl.save_log(ctx)
         with open(context_file, "wb") as f:
             pickle.dump(ctx, f)
     except Exception as exc:
