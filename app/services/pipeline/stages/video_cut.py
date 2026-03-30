@@ -22,7 +22,7 @@ class MarkSegmentBySubtitlesStage(BasePipelineStage):
                 begin_ms = end_ms
                 continue
             # 2. 标记字幕之间的空白区间，供后续裁剪使用。
-            if start_ms > begin_ms:
+            if start_ms > begin_ms + 2000:
                 delete_segments.append(
                     VideoDeleteSegment(start_ms=begin_ms, end_ms=start_ms)
                 )
@@ -30,7 +30,7 @@ class MarkSegmentBySubtitlesStage(BasePipelineStage):
         # 3. 结尾标记
         duration_sec = get_audio_duration(ctx.instrumentals_audio_path)
         end_ms = int(duration_sec * 1000)
-        if end_ms > begin_ms:
+        if end_ms > begin_ms + 2000:
             delete_segments.append(VideoDeleteSegment(start_ms=begin_ms, end_ms=end_ms))
         ctx.delete_segments = delete_segments
 
@@ -44,16 +44,16 @@ class MarkSegmentBySubtitlesStage(BasePipelineStage):
 
     def logfile_name(self) -> str:
         return "delete_segments"
-    
+
     def save_log(self, ctx: ProcessingContext) -> None:
         log_name = self.logfile_name()
         log_data = self.get_data(ctx)
         super()._save_log(ctx, log_name=log_name, log_data=log_data)
-    
+
     def read_log(self, ctx: ProcessingContext) -> str:
         log_name = self.logfile_name()
         return super()._read_log(ctx, log_name=log_name)
-    
+
     def get_data(self, ctx) -> list[dict]:
         return [asdict(item) for item in ctx.delete_segments]
 
@@ -97,14 +97,14 @@ class VideoCutByFFmpegStage(BasePipelineStage):
 
     def logfile_name(self) -> str:
         pass
-    
+
     def save_log(self, ctx: ProcessingContext) -> None:
         pass
-    
+
     def read_log(self, ctx: ProcessingContext) -> str:
         log_name = self.logfile_name()
         return super()._read_log(ctx, log_name=log_name)
-    
+
     def get_data(self, ctx):
         pass
 
