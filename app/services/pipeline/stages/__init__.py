@@ -19,7 +19,7 @@ from app.services.pipeline.stages.synthesize_voice import (
 from app.services.pipeline.stages.transcribe import AssemblyAITranscribeStage
 from app.services.pipeline.stages.translate import OpenAITranslateStage
 from app.services.pipeline.stages.complete import CompleteStage
-
+from app.services.pipeline.stages.emotion_analysis import EmotionAnalysisBySentimentStage
 from app.services.pipeline.stages.replace_audio import FFmpegOriginalSwapStage
 from app.services.pipeline.stages.video_cut import (
     MarkSegmentBySubtitlesStage,
@@ -46,4 +46,5 @@ __all__ = [
     "OptimizeSubtitlesWithoutSpeedCheckStage",
     "MarkSegmentBySubtitlesStage",
     "VideoCutByFFmpegStage",
+    "EmotionAnalysisBySentimentStage",
 ]

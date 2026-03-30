@@ -20,6 +20,7 @@ from app.services.pipeline.stages import (
     OptimizeSubtitlesWithoutSpeedCheckStage,
     MarkSegmentBySubtitlesStage,
     VideoCutByFFmpegStage,
+    EmotionAnalysisBySentimentStage,
 )
 STAGE_BUILDERS = {
     "Analyzing Video": FFprobeAnalyzeVideoStage,
@@ -30,6 +31,7 @@ STAGE_BUILDERS = {
     "Optimizing Subtitles": OptimizeSubtitlesStage,
     "Optimizing Subtitles Without Speed Check": OptimizeSubtitlesWithoutSpeedCheckStage,
     "Reducing Text": OpenAIReduceTextStage,
+    "Emotion Analysis": EmotionAnalysisBySentimentStage,
     "Synthesizing Voice": VolcengineSynthesizeVoiceStage,
     "Synthesizing Voice V2": VolcengineV2SynthesizeVoiceStage,
     "Mixing Audio": PydubMixAudioStage,
@@ -58,21 +60,6 @@ DOUBAO_V1_STAGE_CONFIGS = [
     PipelineStageConfig("Complete", "完成", 100),
 ]
 
-DOUBAO_V2_STAGE_CONFIGS = [
-    PipelineStageConfig("Analyzing Video", "分析视频", 5),
-    PipelineStageConfig("Separating Vocals", "分离人声", 10),
-    PipelineStageConfig("Transcribing", "转录", 20),
-    PipelineStageConfig("Translating", "翻译", 30),
-    PipelineStageConfig("Building Subtitles", "生成字幕", 40),
-    PipelineStageConfig("Optimizing Subtitles", "优化字幕", 48),
-    PipelineStageConfig("Synthesizing Voice V2", "豆包语音合成2.0", 50),
-    PipelineStageConfig("Mixing Audio", "混合音频", 60),
-    PipelineStageConfig("Replacing Audio", "替换音频", 70),
-    PipelineStageConfig("Generating Subtitles", "生成字幕", 80),
-    PipelineStageConfig("Burning Subtitles", "烧录字幕", 90),
-    PipelineStageConfig("Original Swap", "原声置换", 95),
-    PipelineStageConfig("Complete", "完成", 100),
-]
 
 DOUBAO_V2_STAGE_CONFIGS = [
     PipelineStageConfig("Analyzing Video", "分析视频", 5),
@@ -81,6 +68,7 @@ DOUBAO_V2_STAGE_CONFIGS = [
     PipelineStageConfig("Translating", "翻译", 30),
     PipelineStageConfig("Building Subtitles", "生成字幕", 40),
     PipelineStageConfig("Optimizing Subtitles", "优化字幕", 48),
+    PipelineStageConfig("Emotion Analysis", "情绪分析", 49),
     PipelineStageConfig("Synthesizing Voice V2", "豆包语音合成2.0", 50),
     PipelineStageConfig("Mixing Audio", "混合音频", 60),
     PipelineStageConfig("Replacing Audio", "替换音频", 70),

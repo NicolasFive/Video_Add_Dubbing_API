@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+from pathlib import Path
 from app.models.domain import ProcessingContext, Sentiment, TranscriptLine
 from app.services.transcription.assemblyai_client import AssemblyAIService
 import json
@@ -9,11 +9,12 @@ from app.services.pipeline.base import BasePipelineStage
 class AssemblyAITranscribeStage(BasePipelineStage):
     def __init__(self):
         self.transcriber = AssemblyAIService()
+        self.transcript_json = {}
 
     def run(self, ctx: ProcessingContext) -> None:
         result = self.transcriber.transcribe(ctx.vocals_audio_path)
         raw_data = result.json_response
-        ctx.transcript_json = raw_data
+        self.transcript_json = raw_data
         ctx.transcripts = self._parse_transcript(raw_data)
         
     def restore(self, ctx: ProcessingContext) -> bool:
@@ -21,7 +22,7 @@ class AssemblyAITranscribeStage(BasePipelineStage):
         if not log_data:
             return False
         log_data = json.loads(log_data)
-        ctx.transcript_json = log_data
+        self.transcript_json = log_data
         ctx.transcripts = self._parse_transcript(log_data)
         return True
 
@@ -30,7 +31,7 @@ class AssemblyAITranscribeStage(BasePipelineStage):
     
     def save_log(self, ctx: ProcessingContext) -> None:
         log_name = self.logfile_name()
-        log_data = self.get_data(ctx)
+        log_data = self.transcript_json
         super()._save_log(ctx, log_name=log_name, log_data=log_data)
     
     def read_log(self, ctx: ProcessingContext) -> str:
@@ -38,10 +39,12 @@ class AssemblyAITranscribeStage(BasePipelineStage):
         return super()._read_log(ctx, log_name=log_name)
     
     def get_data(self, ctx: ProcessingContext) -> dict:
-        return ctx.transcript_json
+        log_data = self.read_log(ctx)
+        transcript_json = json.loads(log_data)
+        return transcript_json
 
     def set_data(self, ctx, data: dict):
-        ctx.transcript_json = data
+        self.transcript_json = data
     
     def self_check(self, ctx):
         pass

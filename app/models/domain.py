@@ -27,7 +27,7 @@ class SubtitleLine:
     tts_duration_rating: Optional[DurationRating] = None
     tts_eval_speed_ratio: Optional[float] = None
     tts_expected_speed_ratio: Optional[float] = None
-
+    emotion_context: Optional[str] = None
     translated_tts_path: Optional[str] = None
 
     @property
@@ -69,10 +69,8 @@ class ProcessingContext:
     subtitle_font_size: Optional[int] = None
     vocals_audio_path: Optional[str] = None
     instrumentals_audio_path: Optional[str] = None
-    transcript_json_path: Optional[str] = None
 
     # 数据对象
-    transcript_json: Optional[dict] = None
     transcripts: List[TranscriptLine] = field(default_factory=list)
     translations: List[TranslateLine] = field(default_factory=list)
     subtitles: List[SubtitleLine] = field(default_factory=list)
