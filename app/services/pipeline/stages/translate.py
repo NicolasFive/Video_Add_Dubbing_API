@@ -54,8 +54,11 @@ class OpenAITranslateStage(BasePipelineStage):
     def self_check(self, ctx) -> list[SelfCheckItem]:
         # 1. 原文不为空时，译文不能为空
         # 2. 译文不能包含英文
+        # 3. 译文不能包含敏感词
+
         check_results = []
         pattern = re.compile(r'[a-zA-Z]')
+        sensitive_words = ["博士", "TA", "ta",".com",".org",".net"]  # 这里可以替换成实际的敏感词列表
         for i, line in enumerate(ctx.translations):
             if line.original_text.strip() and not line.translated_text.strip():
                 check_results.append(
@@ -67,6 +70,19 @@ class OpenAITranslateStage(BasePipelineStage):
                         confirm_content="",
                     )
                 )
+                continue
+            arr  = [word for word in sensitive_words if word in line.translated_text] 
+            if len(arr) > 0:
+                check_results.append(
+                    SelfCheckItem(
+                        index=i,
+                        check_point="translated_text",
+                        issue=f"译文包含敏感词： {', '.join(arr)}。",
+                        warning_content=line.translated_text,
+                        confirm_content=line.translated_text,
+                    )
+                )
+                continue
             if re.search(pattern, line.translated_text):
                 check_results.append(
                     SelfCheckItem(
@@ -77,6 +93,7 @@ class OpenAITranslateStage(BasePipelineStage):
                         confirm_content=line.translated_text,
                     )
                 )
+                continue
         return check_results
             
 
