@@ -53,6 +53,8 @@ class BuildSubtitlesStage(BasePipelineStage):
             return False
         log_data = json.loads(log_data)
         ctx.subtitles = [SubtitleLine(**item) for item in log_data]
+        for sub in ctx.subtitles:
+            evaluate_speed_ratio(sub)
         return True
 
     def logfile_name(self) -> str:
@@ -72,6 +74,8 @@ class BuildSubtitlesStage(BasePipelineStage):
 
     def set_data(self, ctx: ProcessingContext, data: list[dict]) -> None:
         ctx.subtitles = [SubtitleLine(**item) for item in data]
+        for sub in ctx.subtitles:
+            evaluate_speed_ratio(sub)
 
     def self_check(self, ctx):
         # 检查是否有优化后的字幕仍然过长
@@ -93,6 +97,7 @@ class BuildSubtitlesStage(BasePipelineStage):
     def check_confirm(self, ctx, data):
         for item in data:
             ctx.subtitles[item.index].translated_text = item.confirm_content
+            evaluate_speed_ratio(ctx.subtitles[item.index])
 
 
 
@@ -180,6 +185,8 @@ class OptimizeSubtitlesStage(BasePipelineStage):
             return False
         log_data = json.loads(log_data)
         ctx.optimized_subtitles = [SubtitleLine(**item) for item in log_data]
+        for sub in ctx.optimized_subtitles:
+            evaluate_speed_ratio(sub)
         return True
 
     def logfile_name(self) -> str:
@@ -199,6 +206,8 @@ class OptimizeSubtitlesStage(BasePipelineStage):
 
     def set_data(self, ctx: ProcessingContext, data: list[dict]) -> None:
         ctx.optimized_subtitles = [SubtitleLine(**item) for item in data]
+        for sub in ctx.optimized_subtitles:
+            evaluate_speed_ratio(sub)
 
     def self_check(self, ctx) -> list[SelfCheckItem]:
         # 检查是否有优化后的字幕仍然过长
@@ -246,6 +255,8 @@ class OptimizeSubtitlesWithoutSpeedCheckStage(BasePipelineStage):
             return False
         log_data = json.loads(log_data)
         ctx.optimized_subtitles = [SubtitleLine(**item) for item in log_data]
+        for sub in ctx.optimized_subtitles:
+            evaluate_speed_ratio(sub)
         return True
 
     def logfile_name(self) -> str:
@@ -265,6 +276,8 @@ class OptimizeSubtitlesWithoutSpeedCheckStage(BasePipelineStage):
 
     def set_data(self, ctx: ProcessingContext, data: list[dict]) -> None:
         ctx.optimized_subtitles = [SubtitleLine(**item) for item in data]
+        for sub in ctx.optimized_subtitles:
+            evaluate_speed_ratio(sub)
 
     def self_check(self, ctx) -> list[SelfCheckItem]:
         pass
