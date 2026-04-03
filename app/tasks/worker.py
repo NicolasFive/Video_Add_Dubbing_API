@@ -26,7 +26,7 @@ def run_dubbing_task(
     start_step: str = None,
     end_step: str = None,
     duck_db: Optional[int] = None,
-    no_cache: bool = False,
+    no_cache: Optional[bool] = False,
 ):
     """异步执行配音任务"""
     work_dir = FileManager.get_task_dir(task_id)    
@@ -51,6 +51,8 @@ def run_dubbing_task(
         ctx.input_video_path = ctx.input_video_path if not input_video_path else input_video_path
         ctx.input_audio_path = ctx.input_audio_path if not input_audio_path else input_audio_path
         ctx.voice_types = ctx.voice_types if not voice_types else voice_types
+        ctx.duck_db = ctx.duck_db if duck_db is None else duck_db
+        ctx.no_cache = ctx.no_cache if no_cache is None else no_cache
         # line_type 从参数中获取，不覆盖已保存的
         if line_type == "default":
             line_type = ctx.line_type
