@@ -100,6 +100,8 @@ class OptimizeSubtitlesStage(BasePipelineStage):
     def run(self, ctx: ProcessingContext) -> None:
         optimized_subtitles = []
         prev_sub = None
+        combine_times = 0
+        max_combine_times = 3
         for sub in ctx.subtitles:
             # 克隆一份，避免修改原始字幕数据
             sub = SubtitleLine(**asdict(sub))
@@ -109,7 +111,7 @@ class OptimizeSubtitlesStage(BasePipelineStage):
                 and sub.speaker == prev_sub.speaker
             ):
                 gap = sub.start_ms - prev_sub.end_ms
-                if gap < 1000:
+                if gap < 1000 and combine_times < max_combine_times:
                     prev_sub.end_ms = sub.end_ms
                     prev_sub.original_text = "\n".join(
                         [prev_sub.original_text, sub.original_text]
@@ -118,6 +120,7 @@ class OptimizeSubtitlesStage(BasePipelineStage):
                         [prev_sub.translated_text, sub.translated_text]
                     )
                     evaluate_speed_ratio(prev_sub)
+                    combine_times += 1
                     continue
 
                 need_gap = (
@@ -131,6 +134,7 @@ class OptimizeSubtitlesStage(BasePipelineStage):
 
             optimized_subtitles.append(sub)
             prev_sub = sub
+            combine_times = 0
 
         if not optimized_subtitles:
             ctx.optimized_subtitles = optimized_subtitles
