@@ -1,15 +1,21 @@
+import json
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse
+from typing import Any
 
 from app.core.config import settings
 from app.models.schemas import TaskFileItem, TaskFilesResult, TaskStatusEnum
 from app.utils.redis_oper import get_task_status
 
 router = APIRouter()
+
+
+def _get_temp_root() -> Path:
+    return (Path(settings.STORAGE_ROOT) / settings.TEMP_DIR).resolve()
 
 
 def _resolve_task_dir(task_id: str) -> Path:
@@ -32,6 +38,38 @@ def _build_status(task_id: str) -> tuple[TaskStatusEnum, int, str, str | None]:
     current_step = status_data.get("current_step", "Unknown")
     error_detail = status_data.get("error")
     return status, progress, current_step, error_detail
+
+
+@router.get("/list", response_model=list[dict[str, Any]])
+async def list_task_init_data():
+    temp_root = _get_temp_root()
+    if not temp_root.exists() or not temp_root.is_dir():
+        return []
+
+    items: list[tuple[float, dict[str, Any]]] = []
+    for init_file in temp_root.rglob("init.json"):
+        if not init_file.is_file():
+            continue
+
+        try:
+            with init_file.open("r", encoding="utf-8") as file_obj:
+                payload = json.load(file_obj)
+        except json.JSONDecodeError as exc:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Invalid JSON in {init_file.relative_to(temp_root).as_posix()}",
+            ) from exc
+
+        if not isinstance(payload, dict):
+            raise HTTPException(
+                status_code=500,
+                detail=f"Expected JSON object in {init_file.relative_to(temp_root).as_posix()}",
+            )
+
+        items.append((init_file.stat().st_mtime, payload))
+
+    items.sort(key=lambda item: item[0], reverse=True)
+    return [payload for _, payload in items]
 
 
 @router.get("/{task_id}", response_model=TaskFilesResult)

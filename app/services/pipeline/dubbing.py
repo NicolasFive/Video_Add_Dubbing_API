@@ -95,11 +95,13 @@ class DubbingPipeline:
         try:
             # 根据 start_step 解析本次需要执行的环节列表
             execution_stages = self._resolve_execution_stages(start_step)
+            last_stage_key = None
             for stage_cfg in execution_stages:
                 key = stage_cfg.key
                 progress = stage_cfg.progress
                 # 回调上报当前环节进度
                 if update_progress_callback:
+                    last_stage_key = key
                     update_progress_callback(key, progress)
                 logger.info(f"Task {self.ctx.task_id}: {key}...")
                 # 记录当前环节，便于失败后断点续传
@@ -120,12 +122,15 @@ class DubbingPipeline:
 
             # 全部执行完成后统一上报Completed，但是进度仍然保持最后一个环节的值
             if update_progress_callback:
-                update_progress_callback("Completed", progress)
+                update_progress_callback(f"Completed({last_stage_key})", progress)
             logger.info(f"Task {self.ctx.task_id} Success!")
 
             return self.ctx
 
         except Exception as e:
+            # 更新状态为 Failed
+            if update_progress_callback:
+                update_progress_callback(f"Failed({last_stage_key})", progress or 100, str(e))
             # 统一日志与异常封装
             logger.exception(f"Task {self.ctx.task_id} Failed: {str(e)}")
             raise AppException(str(e))

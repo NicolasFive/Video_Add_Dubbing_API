@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from pathlib import Path
+
+import yaml
+
 from app.services.pipeline.base import PipelineStageConfig
 from app.services.pipeline.stages import (
     FFprobeAnalyzeVideoStage,
@@ -21,8 +25,11 @@ from app.services.pipeline.stages import (
     MarkSegmentBySubtitlesStage,
     VideoCutByFFmpegStage,
     EmotionAnalysisBySentimentStage,
+    PrepareForBeginning,
 )
+
 STAGE_BUILDERS = {
+    "Preparing": PrepareForBeginning,
     "Analyzing Video": FFprobeAnalyzeVideoStage,
     "Separating Vocals": DemucsSeparateVocalsStage,
     "Transcribing": AssemblyAITranscribeStage,
@@ -44,63 +51,28 @@ STAGE_BUILDERS = {
     "Complete": CompleteStage,
 }
 
-DOUBAO_V1_STAGE_CONFIGS = [
-    PipelineStageConfig("Analyzing Video", "分析视频", 5),
-    PipelineStageConfig("Separating Vocals", "分离人声", 10),
-    PipelineStageConfig("Transcribing", "转录", 20),
-    PipelineStageConfig("Translating", "翻译", 30),
-    PipelineStageConfig("Building Subtitles", "生成字幕数据", 40),
-    PipelineStageConfig("Optimizing Subtitles", "优化字幕数据", 48),
-    PipelineStageConfig("Synthesizing Voice", "豆包语音合成1.0", 50),
-    PipelineStageConfig("Mixing Audio", "混合音频", 60),
-    PipelineStageConfig("Replacing Audio", "替换音频", 70),
-    PipelineStageConfig("Generating Subtitles", "生成字幕", 80),
-    PipelineStageConfig("Burning Subtitles", "烧录字幕", 90),
-    PipelineStageConfig("Original Swap", "原声置换", 95),
-    PipelineStageConfig("Complete", "完成", 100),
-]
+_STAGES_YML = Path(__file__).with_name("pipeline_stages.yml")
 
 
-DOUBAO_V2_STAGE_CONFIGS = [
-    PipelineStageConfig("Analyzing Video", "分析视频", 5),
-    PipelineStageConfig("Separating Vocals", "分离人声", 10),
-    PipelineStageConfig("Transcribing", "转录", 20),
-    PipelineStageConfig("Translating", "翻译", 30),
-    PipelineStageConfig("Building Subtitles", "生成字幕", 40),
-    PipelineStageConfig("Optimizing Subtitles", "优化字幕", 48),
-    PipelineStageConfig("Emotion Analysis", "情绪分析", 49),
-    PipelineStageConfig("Synthesizing Voice V2", "豆包语音合成2.0", 50),
-    PipelineStageConfig("Mixing Audio", "混合音频", 60),
-    PipelineStageConfig("Replacing Audio", "替换音频", 70),
-    PipelineStageConfig("Generating Subtitles", "生成字幕", 80),
-    PipelineStageConfig("Burning Subtitles", "烧录字幕", 90),
-    PipelineStageConfig("Original Swap", "原声置换", 95),
-    PipelineStageConfig("Mark Delete Segment", "标记删除片段", 96),
-    PipelineStageConfig("Video Cutting", "视频裁剪", 97),
-    PipelineStageConfig("Complete", "完成", 100),
-]
-
-ONLY_SUBTITLES_STAGE_CONFIGS = [
-    PipelineStageConfig("Analyzing Video", "分析视频", 5),
-    PipelineStageConfig("Separating Vocals", "分离人声", 10),
-    PipelineStageConfig("Transcribing", "转录", 20),
-    PipelineStageConfig("Translating", "翻译", 30),
-    PipelineStageConfig("Building Subtitles", "生成字幕", 40),
-    PipelineStageConfig("Optimizing Subtitles Without Speed Check", "优化字幕（无音速检查）", 48),
-    PipelineStageConfig("Replacing Audio", "替换音频", 70),
-    PipelineStageConfig("Generating Subtitles", "生成字幕", 80),
-    PipelineStageConfig("Burning Subtitles", "烧录字幕", 90),
-    PipelineStageConfig("Complete", "完成", 100),
-]
+def _load_stage_configs_map() -> dict[str, list[PipelineStageConfig]]:
+    with _STAGES_YML.open("r", encoding="utf-8") as _f:
+        _raw: dict[str, list[dict]] = yaml.safe_load(_f)
+    result: dict[str, list[PipelineStageConfig]] = {}
+    for line_type, stages in _raw.items():
+        result[line_type] = [
+            PipelineStageConfig(
+                key=stage["key"],
+                name=stage["name"],
+                progress=int(stage["progress"]),
+                enabled=bool(stage.get("enabled", True)),
+            )
+            for stage in stages
+        ]
+    return result
 
 
-# 预设多个 STAGE_CONFIGS
-STAGE_CONFIGS_MAP = {
-    "default": DOUBAO_V2_STAGE_CONFIGS,
-    "doubao_v1": DOUBAO_V1_STAGE_CONFIGS,
-    "doubao_v2": DOUBAO_V2_STAGE_CONFIGS,
-    "only_subtitles": ONLY_SUBTITLES_STAGE_CONFIGS,
-}
+# 从 pipeline_stages.yml 初始化
+STAGE_CONFIGS_MAP = _load_stage_configs_map()
 
 
 def build_stage_registry():
@@ -114,10 +86,10 @@ def get_available_line_types() -> list[str]:
 
 def build_stage_configs(line_type: str = "default") -> list[PipelineStageConfig]:
     """根据 line_type 构建对应的 STAGE_CONFIGS
-    
+
     Args:
         line_type: 配置类型，如果不存在则使用默认值
-        
+
     Returns:
         对应 line_type 的 STAGE_CONFIGS 列表
     """

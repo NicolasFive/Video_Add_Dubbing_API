@@ -25,6 +25,7 @@ from app.services.pipeline.stages.video_cut import (
     MarkSegmentBySubtitlesStage,
     VideoCutByFFmpegStage,
 )
+from app.services.pipeline.stages.prepare import PrepareForBeginning
 
 
 __all__ = [
@@ -47,4 +48,5 @@ __all__ = [
     "MarkSegmentBySubtitlesStage",
     "VideoCutByFFmpegStage",
     "EmotionAnalysisBySentimentStage",
+    "PrepareForBeginning",
 ]

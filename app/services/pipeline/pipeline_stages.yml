@@ -1,0 +1,141 @@
+# Pipeline stage configurations.
+# Each top-level key is a line_type that maps to an ordered list of stages.
+# Fields per stage:
+#   key      (str)  - Matches a key in STAGE_BUILDERS.
+#   name     (str)  - Human-readable Chinese display name.
+#   progress (int)  - Progress percentage when this stage starts (0-100).
+#   enabled  (bool) - Optional, defaults to true.
+
+default: &doubao_v2
+  - key: Preparing
+    name: 准备
+    progress: 1
+  - key: Analyzing Video
+    name: 分析视频
+    progress: 5
+  - key: Separating Vocals
+    name: 分离人声
+    progress: 10
+  - key: Transcribing
+    name: 转录
+    progress: 20
+  - key: Translating
+    name: 翻译
+    progress: 30
+  - key: Building Subtitles
+    name: 生成字幕
+    progress: 40
+  - key: Optimizing Subtitles
+    name: 优化字幕
+    progress: 48
+  - key: Emotion Analysis
+    name: 情绪分析
+    progress: 49
+  - key: Synthesizing Voice V2
+    name: 豆包语音合成2.0
+    progress: 50
+  - key: Mixing Audio
+    name: 混合音频
+    progress: 60
+  - key: Replacing Audio
+    name: 替换音频
+    progress: 70
+  - key: Generating Subtitles
+    name: 生成字幕
+    progress: 80
+  - key: Burning Subtitles
+    name: 烧录字幕
+    progress: 90
+  - key: Original Swap
+    name: 原声置换
+    progress: 95
+  - key: Mark Delete Segment
+    name: 标记删除片段
+    progress: 96
+  - key: Video Cutting
+    name: 视频裁剪
+    progress: 97
+  - key: Complete
+    name: 完成
+    progress: 100
+
+doubao_v1:
+  - key: Preparing
+    name: 准备
+    progress: 1
+  - key: Analyzing Video
+    name: 分析视频
+    progress: 5
+  - key: Separating Vocals
+    name: 分离人声
+    progress: 10
+  - key: Transcribing
+    name: 转录
+    progress: 20
+  - key: Translating
+    name: 翻译
+    progress: 30
+  - key: Building Subtitles
+    name: 生成字幕数据
+    progress: 40
+  - key: Optimizing Subtitles
+    name: 优化字幕数据
+    progress: 48
+  - key: Synthesizing Voice
+    name: 豆包语音合成1.0
+    progress: 50
+  - key: Mixing Audio
+    name: 混合音频
+    progress: 60
+  - key: Replacing Audio
+    name: 替换音频
+    progress: 70
+  - key: Generating Subtitles
+    name: 生成字幕
+    progress: 80
+  - key: Burning Subtitles
+    name: 烧录字幕
+    progress: 90
+  - key: Original Swap
+    name: 原声置换
+    progress: 95
+  - key: Complete
+    name: 完成
+    progress: 100
+
+doubao_v2: *doubao_v2
+
+only_subtitles:
+  - key: Preparing
+    name: 准备
+    progress: 1
+  - key: Analyzing Video
+    name: 分析视频
+    progress: 5
+  - key: Separating Vocals
+    name: 分离人声
+    progress: 10
+  - key: Transcribing
+    name: 转录
+    progress: 20
+  - key: Translating
+    name: 翻译
+    progress: 30
+  - key: Building Subtitles
+    name: 生成字幕
+    progress: 40
+  - key: Optimizing Subtitles Without Speed Check
+    name: 优化字幕（无音速检查）
+    progress: 48
+  - key: Replacing Audio
+    name: 替换音频
+    progress: 70
+  - key: Generating Subtitles
+    name: 生成字幕
+    progress: 80
+  - key: Burning Subtitles
+    name: 烧录字幕
+    progress: 90
+  - key: Complete
+    name: 完成
+    progress: 100

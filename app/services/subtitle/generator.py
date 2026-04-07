@@ -1,12 +1,14 @@
 import re
 from app.models.domain import SubtitleLine
 from app.utils.time_utils import ms_to_srt_time
+from app.services.translation.llm_div import LLMDiv, DivResult
 
 
 class SubtitleGenerator:
     def __init__(self):
         # 分割标点
         self.punctuation = ".,;:,.:;、，。；：—"
+        self.llmdiv = LLMDiv()
 
     def generate_srt(
         self,
@@ -18,7 +20,7 @@ class SubtitleGenerator:
         original_text_on: bool = True,
     ):
         handled_subtitles = self._split_long_subtitles(
-            subtitles, video_width, font_size, max_lines_on_screen,original_text_on
+            subtitles, video_width, font_size, max_lines_on_screen, original_text_on
         )
         # handled_subtitles = subtitles
         with open(output_path, "w", encoding="utf-8") as f:
@@ -56,7 +58,9 @@ class SubtitleGenerator:
         # 逻辑：可用宽度 (90%) / (字号 * 0.9)。中文通常接近正方形，留 10% 余量给字间距和边距
         safe_width = video_width * 0.9
         avg_char_width = font_size * 1.1
-        max_chars_per_line = int(safe_width / avg_char_width*1.5) # 乘以1.5的系数是经验校正值
+        max_chars_per_line = int(
+            safe_width / avg_char_width * 1.5
+        )  # 乘以1.5的系数是经验校正值
 
         # 保底设置，防止字号过大导致计算值过小
         if max_chars_per_line < 8:
@@ -75,12 +79,14 @@ class SubtitleGenerator:
 
             # 如果没有翻译文本，直接保留原对象
             if not cleaned_text:
-                handled_subtitles.append(SubtitleLine(
-                    start_ms=sub.start_ms,
-                    end_ms=sub.end_ms,
-                    original_text=sub.original_text,
-                    translated_text=sub.translated_text,
-                ))
+                handled_subtitles.append(
+                    SubtitleLine(
+                        start_ms=sub.start_ms,
+                        end_ms=sub.end_ms,
+                        original_text=sub.original_text,
+                        translated_text=sub.translated_text,
+                    )
+                )
                 continue
             # 2. 逐行判断文本长度，超过限制则拆分
             lines_within_limit = []
@@ -95,7 +101,7 @@ class SubtitleGenerator:
                 else:
                     lines_within_limit.append(line)
                     lines_split_num.append(1)
-            
+
             # 3. 将拆分后的行重新组合成新的 SubtitleLine 对象，时间轴均匀分布
             start_ms = sub.start_ms
             duration_ms = sub.end_ms - sub.start_ms
@@ -109,21 +115,45 @@ class SubtitleGenerator:
                     current_end = int(
                         start_ms + (duration_ms / len(cleaned_text)) * len(seg_text)
                     )
-                arr.append(SubtitleLine(
-                    start_ms=start_ms,
-                    end_ms=current_end,
-                    original_text="",
-                    translated_text=seg_text,  # 使用拆分后的短句
-                ))
+                arr.append(
+                    SubtitleLine(
+                        start_ms=start_ms,
+                        end_ms=current_end,
+                        original_text="",
+                        translated_text=seg_text,  # 使用拆分后的短句
+                    )
+                )
                 start_ms = current_end  # 下一段开始时间紧跟上一段结束时间
-            
+
             # 4. 判断是否需要添加原文
-            original_text_arr = sub.original_text.splitlines() if sub.original_text else []
+            original_text_arr = (
+                sub.original_text.splitlines() if sub.original_text else []
+            )
             if original_text_on:
-                idx=0
+                idx = 0
                 for i, num in enumerate(lines_split_num):
-                    arr[idx].original_text = original_text_arr[i] if i < len(original_text_arr) else ""
-                    idx+=num
+                    original_text = (
+                        original_text_arr[i] if i < len(original_text_arr) else ""
+                    )
+                    # 判断是否需要使用llmdiv进行分割
+                    if num > 1:
+                        div_result = self.llmdiv.exec(
+                            original_text,
+                            [arr[idx + j].translated_text for j in range(num)],
+                        )
+                        # 保底策略：如果分割失败，仍然按照原行分配原文
+                        if not div_result.original_texts:
+                            div_result.original_texts = [original_text]
+                        for j in range(num):
+                            arr[idx + j].original_text = (
+                                div_result.original_texts[j]
+                                if j < len(div_result.original_texts)
+                                else ""
+                            )
+
+                    else:
+                        arr[idx].original_text = original_text
+                    idx += num
             handled_subtitles.extend(arr)
         return handled_subtitles
 

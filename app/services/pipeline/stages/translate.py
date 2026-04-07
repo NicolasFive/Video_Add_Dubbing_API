@@ -58,7 +58,7 @@ class OpenAITranslateStage(BasePipelineStage):
 
         check_results = []
         pattern = re.compile(r'[a-zA-Z]')
-        sensitive_words = ["博士", "TA", "ta",".com",".org",".net"]  # 这里可以替换成实际的敏感词列表
+        sensitive_words = ["博士", "TA", "ta",".com",".org",".net","http"]  # 这里可以替换成实际的敏感词列表
         for i, line in enumerate(ctx.translations):
             if line.original_text.strip() and not line.translated_text.strip():
                 check_results.append(

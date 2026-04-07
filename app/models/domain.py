@@ -10,9 +10,10 @@ class Sentiment(str, Enum):
     NEUTRAL = "NEUTRAL"
     NEGATIVE = "NEGATIVE"
 
+
 class DurationRating(str, Enum):
-    TOO_LONG = "TOO_LONG" # 字幕过长，配音可能听起来不自然，语速过快
-    TOO_SHORT = "TOO_SHORT" # 字幕过短，配音可能听起来拖沓，语速过慢
+    TOO_LONG = "TOO_LONG"  # 字幕过长，配音可能听起来不自然，语速过快
+    TOO_SHORT = "TOO_SHORT"  # 字幕过短，配音可能听起来拖沓，语速过慢
 
 
 @dataclass
@@ -34,6 +35,7 @@ class SubtitleLine:
     def tts_expected_duration_ms(self) -> int:
         return self.end_ms - self.start_ms
 
+
 @dataclass
 class TranscriptLine:
     start_ms: int
@@ -42,10 +44,12 @@ class TranscriptLine:
     sentiment: Optional[Sentiment] = None
     speaker: Optional[str] = None
 
+
 @dataclass
 class TranslateLine:
     original_text: str
     translated_text: Optional[str] = None
+
 
 @dataclass
 class ProcessingContext:
@@ -55,9 +59,10 @@ class ProcessingContext:
     input_video_path: Optional[str]
     input_audio_path: Optional[str]
     work_dir: str
+    voice_source: Optional[str] = None
     voice_types: list[str] = field(default_factory=list)
     line_type: str = "default"  # 用于选择不同的 STAGE_CONFIGS
-    duck_db: Optional[int]=-10  # 叠加时主音频的降音量，单位为 dB
+    duck_db: Optional[int] = -10  # 叠加时主音频的降音量，单位为 dB
     no_cache: Optional[bool] = False  # 是否跳过日志读取，强制执行环节
 
     # 当前执行的步骤，用于断点续传
@@ -81,6 +86,7 @@ class ProcessingContext:
     final_video_path: Optional[str] = None
     final_subtitle_path: Optional[str] = None
 
+
 @dataclass
 class ReducerData:
     text: str
@@ -95,4 +101,3 @@ class SelfCheckItem:
     issue: str = None
     warning_content: Optional[str] = None
     confirm_content: Optional[str] = None
-

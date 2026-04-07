@@ -207,7 +207,53 @@ curl -X POST "http://127.0.0.1:8000/v1/dubbing" \
 curl "http://127.0.0.1:8000/v1/status/<task_id>"
 ```
 
-### 5.3 `GET /v1/result/{task_id}`
+### 5.3 `GET /v1/result/list`
+
+用途：递归扫描 `storage/temp` 目录及其子目录下的 `init.json` 文件，读取其中的 JSON 对象，并按文件最后修改时间倒序返回对象数组。
+
+#### 查询参数
+
+无。
+
+#### 成功响应（`200`）
+
+- JSON 数组。
+- 数组中的每一项都是对应 `init.json` 文件里的 JSON 对象。
+- 排序规则为 `init.json` 文件最后修改时间倒序。
+
+请求示例：
+
+```bash
+curl "http://127.0.0.1:8000/v1/result/list"
+```
+
+响应示例：
+
+```json
+[
+  {
+    "task_id": "579824cb-4277-483d-bb24-0ebcae9f81e3",
+    "input_video_path": "storage\\temp\\579824cb-4277-483d-bb24-0ebcae9f81e3\\Chris finally wins something - QuahogTheater (1080p, h264).mp4",
+    "input_audio_path": null,
+    "work_dir": "storage\\temp\\579824cb-4277-483d-bb24-0ebcae9f81e3",
+    "voice_source": null,
+    "voice_types": [
+      "zh_male_jingqiangkanye_emo_mars_bigtts"
+    ],
+    "line_type": "default",
+    "duck_db": null,
+    "no_cache": false,
+    "update_time": "2026-04-07 10:26:24"
+  }
+]
+```
+
+说明：
+
+- 当 `storage/temp` 不存在时，接口返回空数组 `[]`。
+- 当某个 `init.json` 不是合法 JSON，或其根节点不是 JSON 对象时，接口返回 `500`。
+
+### 5.4 `GET /v1/result/{task_id}`
 
 用途：按任务查询已生成文件列表，并返回对应下载链接。
 
@@ -241,7 +287,7 @@ curl "http://127.0.0.1:8000/v1/status/<task_id>"
 curl "http://127.0.0.1:8000/v1/result/<task_id>"
 ```
 
-### 5.4 `GET /v1/result/{task_id}/download`
+### 5.5 `GET /v1/result/{task_id}/download`
 
 用途：根据任务内相对路径下载指定产物文件。
 
@@ -261,7 +307,7 @@ curl "http://127.0.0.1:8000/v1/result/<task_id>"
 curl -L "http://127.0.0.1:8000/v1/result/<task_id>/download?file=subtitles.srt" -o subtitles.srt
 ```
 
-### 5.5 `GET /v1/pipline/config`
+### 5.6 `GET /v1/pipline/config`
 
 用途：获取指定 `line_type` 对应的 pipeline 阶段配置列表。
 

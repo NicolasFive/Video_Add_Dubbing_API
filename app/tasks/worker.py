@@ -59,7 +59,13 @@ def run_dubbing_task(
 
     def update_progress(step, percent, error=None):
         # 更新 Redis 中的任务状态
-        save_task_status(task_id, TaskStatusEnum.PROCESSING.value, percent, step, error)
+        if error:
+            # 更新状态为 Failed
+            save_task_status(task_id, TaskStatusEnum.FAILED.value, percent or 100, step, str(error))
+        elif percent >= 100:
+            save_task_status(task_id, TaskStatusEnum.SUCCESS.value, percent, step, error)
+        else:
+            save_task_status(task_id, TaskStatusEnum.PROCESSING.value, percent, step, error)
 
     try:
         # 根据 line_type 获取对应的 stage_configs
@@ -72,10 +78,7 @@ def run_dubbing_task(
         # shutil.move(result_ctx.final_video_path, final_dest)
         return {"status": "success"}
 
-    except Exception as exc:
-        # 更新状态为 Failed
-        save_task_status(task_id, TaskStatusEnum.FAILED.value, 100, "Failed", str(exc))
-        
+    except:
         # 尝试获取失败的步骤，用于重试时从该步骤开始
         retry_start_step = start_step
         context_file = work_dir / "context.pkl"

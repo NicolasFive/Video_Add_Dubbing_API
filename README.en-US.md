@@ -217,7 +217,49 @@ Example response:
 }
 ```
 
-### 5.3 `GET /v1/result/{task_id}`
+### 5.3 `GET /v1/result/list`
+
+Purpose: Recursively scan `storage/temp` and all subdirectories for `init.json` files, read the JSON object in each file, and return an array sorted by file last modified time in descending order.
+
+#### Query Parameters
+
+None.
+
+#### Success Response (`200`)
+
+- A JSON array.
+- Each item is the JSON object read from an `init.json` file.
+- Sorting is based on the `init.json` file last modified time in descending order.
+
+Example request:
+
+```bash
+curl "http://127.0.0.1:8000/v1/result/list"
+```
+
+Example response:
+
+```json
+[
+  {
+    "task_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "title": "example task",
+    "created_at": "2026-04-07T10:30:00"
+  },
+  {
+    "task_id": "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy",
+    "title": "older task",
+    "created_at": "2026-04-06T09:00:00"
+  }
+]
+```
+
+Notes:
+
+- If `storage/temp` does not exist, the endpoint returns an empty array `[]`.
+- If any `init.json` contains invalid JSON or its root value is not a JSON object, the endpoint returns `500`.
+
+### 5.4 `GET /v1/result/{task_id}`
 
 Purpose: List task-generated files and provide downloadable links.
 
@@ -279,7 +321,7 @@ Example response:
 }
 ```
 
-### 5.4 `GET /v1/result/{task_id}/download`
+### 5.5 `GET /v1/result/{task_id}/download`
 
 Purpose: Download a generated file by task-relative path.
 
@@ -299,7 +341,7 @@ Example request:
 curl -L "http://127.0.0.1:8000/v1/result/<task_id>/download?file=subtitles.srt" -o subtitles.srt
 ```
 
-### 5.5 `GET /v1/pipline/config`
+### 5.6 `GET /v1/pipline/config`
 
 Purpose: Get stage config list for the specified `line_type`.
 

@@ -25,6 +25,7 @@ class RuleBasedGenerateSubtitlesStage(BasePipelineStage):
             ctx.subtitle_font_size,
         )
         ctx.final_subtitle_path = str(srt_path)
+        
 
     def restore(self, ctx: ProcessingContext) -> bool:
         pass
@@ -52,6 +53,21 @@ class RuleBasedGenerateSubtitlesStage(BasePipelineStage):
         with open(srt_path, "w", encoding="utf-8") as f:
             f.write(data)
 
+    def parse_srt(self, srt_content: str) -> list[str]:
+        # 使用捕获组保留分隔段（序号 + 时间轴）
+        split_pattern = r"(\d+\n\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3})"
+        parts = re.split(split_pattern, srt_content.strip())
+
+        entities = []
+        # parts 结构: [前导文本, 分隔段1, 正文1, 分隔段2, 正文2, ...]
+        for i in range(1, len(parts), 2):
+            separator = parts[i].strip()
+            body = parts[i + 1].strip() if i + 1 < len(parts) else ""
+            entity = f"{separator}\n{body}".strip()
+            if entity:
+                entities.append(entity)
+        return entities
+    
     def self_check(self, ctx) -> list[SelfCheckItem]:
         srt_path = Path(ctx.work_dir) / "subtitles.srt"
         subtitles = (
@@ -61,7 +77,7 @@ class RuleBasedGenerateSubtitlesStage(BasePipelineStage):
         check_results = []
         with open(srt_path, "r", encoding="utf-8") as f:
             content = f.read()
-            entities = re.split(r"\n{2,}", content.strip())  # 按照连续的空行分割成条目
+            entities = self.parse_srt(content)
             start_index = 0
 
             for i, entity in enumerate(entities):
@@ -108,7 +124,7 @@ class RuleBasedGenerateSubtitlesStage(BasePipelineStage):
         srt_path = Path(ctx.work_dir) / "subtitles.srt"
         with open(srt_path, "r", encoding="utf-8") as f:
             content = f.read()
-            entities = re.split(r"\n{2,}", content.strip())  # 按照连续的空行分割成条目
+            entities = self.parse_srt(content)
             for item in data:
                 entity = entities[item.index - 1]
                 if entity.strip().startswith(str(item.index)):
