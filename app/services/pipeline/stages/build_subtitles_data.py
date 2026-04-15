@@ -147,8 +147,6 @@ class OptimizeSubtitlesStage(BasePipelineStage):
 
         last_sub = optimized_subtitles[-1]
         max_merge_times = 3
-        merge_times = 0
-
         while (
             last_sub
             and last_sub.tts_duration_rating == DurationRating.TOO_LONG
@@ -158,7 +156,8 @@ class OptimizeSubtitlesStage(BasePipelineStage):
             if last_prev_sub.speaker != last_sub.speaker:
                 break
             gap = last_sub.start_ms - last_prev_sub.end_ms
-            if gap < 500:
+            merge_times = last_prev_sub.translated_text.count("\n") + 1
+            if gap < 500 and merge_times < max_merge_times:
                 last_prev_sub.end_ms = last_sub.end_ms
                 last_prev_sub.original_text = "\n".join(
                     [last_prev_sub.original_text, last_sub.original_text]
@@ -169,9 +168,6 @@ class OptimizeSubtitlesStage(BasePipelineStage):
                 optimized_subtitles.pop()
                 evaluate_speed_ratio(last_prev_sub)
                 last_sub = last_prev_sub
-                merge_times += 1
-                if merge_times >= max_merge_times:
-                    break
             else:
                 need_gap = (
                     last_sub.tts_eval_speed_ratio
