@@ -146,6 +146,9 @@ class OptimizeSubtitlesStage(BasePipelineStage):
             return
 
         last_sub = optimized_subtitles[-1]
+        max_merge_times = 3
+        merge_times = 0
+
         while (
             last_sub
             and last_sub.tts_duration_rating == DurationRating.TOO_LONG
@@ -166,6 +169,9 @@ class OptimizeSubtitlesStage(BasePipelineStage):
                 optimized_subtitles.pop()
                 evaluate_speed_ratio(last_prev_sub)
                 last_sub = last_prev_sub
+                merge_times += 1
+                if merge_times >= max_merge_times:
+                    break
             else:
                 need_gap = (
                     last_sub.tts_eval_speed_ratio
