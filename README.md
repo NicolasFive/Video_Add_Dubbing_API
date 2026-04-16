@@ -501,7 +501,55 @@ curl -X POST "http://127.0.0.1:8000/v1/optimize/check_confirm/<task_id>" \
 - `data` 不是合法 JSON 时，接口返回 `400`。
 - `data` 中元素无法映射为 `SelfCheckItem` 时，接口会返回校验错误。
 
-### 5.11 `GET /v1/health`
+### 5.11 `POST /v1/optimize/reduce/{task_id}`
+
+用途：调用文本精简能力，对输入文本执行压缩/精简并返回结果。
+
+Content-Type：`multipart/form-data`
+
+#### 路径参数
+
+| 名称 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `task_id` | string | 是 | 任务 ID（用于业务侧追踪请求来源；本接口不依赖 `context.pkl`）。 |
+
+#### 请求参数
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| `text` | form-data | string | 是 | 需要精简的原始文本。 |
+
+#### 成功响应（`200`）
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `task_id` | string | 请求中的任务 ID。 |
+| `original_text` | string | 输入的原始文本。 |
+| `reduced_text` | string | 模型返回的精简文本。 |
+
+请求示例：
+
+```bash
+curl -X POST "http://127.0.0.1:8000/v1/optimize/reduce/<task_id>" \
+  -F "text=这是一个比较长的句子，需要被精简为更短且保留核心含义的表达。"
+```
+
+响应示例：
+
+```json
+{
+  "task_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "original_text": "这是一个比较长的句子，需要被精简为更短且保留核心含义的表达。",
+  "reduced_text": "将句子精简为更短表达并保留核心含义。"
+}
+```
+
+错误说明：
+
+- 当 `text` 缺失时，接口返回 `422`。
+- 当 LLM 调用失败或内部处理异常时，接口返回 `500`。
+
+### 5.12 `GET /v1/health`
 
 用途：API 与依赖组件健康检查。
 

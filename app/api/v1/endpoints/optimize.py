@@ -3,9 +3,10 @@ import pickle
 
 from fastapi import APIRouter, HTTPException, Form
 
-from app.models.domain import SelfCheckItem
-from app.models.schemas import OptimizeDataResult, OptimizeUpdateResult, SelfCheckDataResult, CheckConfirmDataResult
+from app.models.domain import SelfCheckItem, ReducerData
+from app.models.schemas import OptimizeDataResult, OptimizeUpdateResult, SelfCheckDataResult, CheckConfirmDataResult, OptimizeReducerResult
 from app.services.pipeline import build_stage_configs, build_stage_registry
+from app.services.translation.llm_reducer import LLMReducer
 from app.utils.file_manager import FileManager
 
 router = APIRouter()
@@ -105,6 +106,26 @@ async def update_current_config(
         task_id=task_id,
         stage=stage_key,
         message="stage data updated",
+    )
+
+
+@router.post("/reduce/{task_id}", response_model=OptimizeReducerResult)
+async def reduce_text(
+    task_id: str,
+    text: str = Form(...),
+):
+    try:
+        reducer_data = ReducerData(text=text, target_length=-1)
+        reduced_text = LLMReducer().exec(reducer_data)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500, detail=f"failed to reduce text: {exc}"
+        ) from exc
+
+    return OptimizeReducerResult(
+        task_id=task_id,
+        original_text=text,
+        reduced_text=reduced_text,
     )
 
 @router.get("/self_check/{task_id}", response_model=SelfCheckDataResult)

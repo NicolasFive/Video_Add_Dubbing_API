@@ -532,7 +532,55 @@ Error notes:
 - The endpoint returns `400` when `data` is not valid JSON.
 - If any item in `data` cannot be parsed into `SelfCheckItem`, validation fails.
 
-### 5.11 `GET /v1/health`
+### 5.11 `POST /v1/optimize/reduce/{task_id}`
+
+Purpose: Call the text reduction capability to compress/simplify input text and return the reduced result.
+
+Content-Type: `multipart/form-data`
+
+#### Path Parameters
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| `task_id` | string | Yes | Task ID for business-side tracking; this endpoint does not depend on `context.pkl`. |
+
+#### Request Parameters
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `text` | form-data | string | Yes | Original text to be reduced. |
+
+#### Success Response (`200`)
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `task_id` | string | Task ID from the request. |
+| `original_text` | string | Original input text. |
+| `reduced_text` | string | Reduced text returned by the model. |
+
+Example request:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/v1/optimize/reduce/<task_id>" \
+  -F "text=This sentence is intentionally long and should be reduced while preserving the core meaning."
+```
+
+Example response:
+
+```json
+{
+  "task_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "original_text": "This sentence is intentionally long and should be reduced while preserving the core meaning.",
+  "reduced_text": "Reduce the sentence while preserving its core meaning."
+}
+```
+
+Error notes:
+
+- The endpoint returns `422` when `text` is missing.
+- The endpoint returns `500` when LLM invocation fails or internal processing raises an exception.
+
+### 5.12 `GET /v1/health`
 
 Purpose: Health check for API and dependency components.
 

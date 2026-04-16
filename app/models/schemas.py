@@ -71,6 +71,12 @@ class CheckConfirmDataResult(BaseModel):
     task_id: str
     stage: str
 
+
+class OptimizeReducerResult(BaseModel):
+    task_id: str
+    original_text: str
+    reduced_text: str
+
 class PipelineConfigItem(BaseModel):
     key: str
     name: str
